@@ -47,7 +47,13 @@ class Gate(object):
     def gradient(self, stimulus, variable, grad):
         if variable not in self.variables:
             return grad @ np.zeros(self(stimulus).shape)
-        return np.vstack([child.gradient(stimulus, variable, grad) for child in self.children])
+
+        gradients = []
+        cursor = 0
+        for child in self.children:
+            gradients.append(child.gradient(stimulus, variable, grad[:, cursor:cursor + child.output_nodes]))
+            cursor += child.output_nodes
+        return np.vstack(gradients)
 
     @property
     @_store

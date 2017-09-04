@@ -79,7 +79,7 @@ class TransformRecurrent(Transform):
             return grad @ (1 + self._variables['internal'])
         if variable is self._variables['internal']:
             return grad.T @ propagated[None]
-        return super().gradient(stimulus, variable, grad @ self._variables['weights'])
+        return super().gradient(stimulus, variable, grad[:, self.output_nodes:] @ self._variables['weights'])
 
     @property
     def input_nodes(self):
