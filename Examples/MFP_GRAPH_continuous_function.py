@@ -2,7 +2,7 @@
 from inspect import signature
 
 # Use custom implementation:
-from MFP_Graph import *
+from Neural_Network import *
 
 # Use Tensorflow wrapper:
 # from MFP_TF import *
@@ -121,7 +121,7 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
 # environment = Continuous([lambda v: (24 * v**4 - 2 * v**2 + v)], domain=[[-1, 1]])
 
 # ~~~ Create the network ~~~
-graph = Logistic(Transform(Stimulus(environment), 2))
+graph = Logistic(Transform(Stimulus(environment), 8))
 variables = graph.variables
 
 # ~~~ Test the network ~~~

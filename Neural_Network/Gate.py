@@ -1,5 +1,4 @@
 import numpy as np
-from .Variable import Variable
 
 
 # Return cached value if already computed for current stimulus
@@ -47,8 +46,6 @@ class Gate(object):
 
     def gradient(self, stimulus, variable, grad):
         if variable not in self.variables:
-            # TODO: This shape may be incorrect
-            print("NOT RECOGNIZED")
             return grad @ np.zeros(self(stimulus).shape)
         return np.vstack([child.gradient(stimulus, variable, grad) for child in self.children])
 
@@ -77,43 +74,6 @@ class Gate(object):
         for child in self.children:
             variables.extend(child.variables)
         return variables
-
-
-class Transform(Gate):
-    def __init__(self, children, nodes):
-        super().__init__(children)
-        self._variables = {
-            'weights': Variable(np.random.normal(size=(nodes, self.input_nodes))),
-            'biases': Variable(np.zeros((nodes, 1)))}
-
-    @property
-    def output_nodes(self):
-        return self.weights.shape[0]
-
-    @_cache
-    def __call__(self, stimulus):
-        return self._variables['weights'] @ super().__call__(stimulus) + self._variables['biases']
-
-    @_cache
-    def gradient(self, stimulus, variable, grad):
-        propagated = super().__call__(stimulus)
-        if variable is self._variables['weights']:
-            # Full derivative: This is a tensor product simplification to avoid the use of the kron product
-            return grad.T @ propagated[None]
-        if variable is self._variables['biases']:
-            return grad
-        return super().gradient(stimulus, variable, grad @ self.weights)
-
-
-class Logistic(Gate):
-    @_cache
-    def __call__(self, stimulus):
-        return 1.0 / (1.0 + np.exp(-super().__call__(stimulus)))
-
-    @_cache
-    def gradient(self, stimulus, variable, grad):
-        print(list(stimulus.values())[0].shape)
-        return super().gradient(stimulus, variable, grad * self(stimulus) * (1.0 - self(stimulus)))
 
 
 class Stimulus(Gate):

@@ -20,14 +20,14 @@ class Variable(np.ndarray):
 
         # Stimuli become vectorized, but bias units remain 1D. To add wx + b, must broadcast
         if self.ndim == 2 and other.ndim == 1:
-            return Array(np.add(self, np.tile(other[..., np.newaxis], self.shape[1])))
+            return Variable(np.add(self, np.tile(other[..., np.newaxis], self.shape[1])))
         if self.ndim == 1 and other.ndim == 2:
-            return Array(np.add(np.tile(self[..., np.newaxis], other.shape[1]), other))
+            return Variable(np.add(np.tile(self[..., np.newaxis], other.shape[1]), other))
 
         if self.ndim == 3 and other.ndim == 2:
-            return Array(np.add(self, np.tile(other[..., np.newaxis], self.shape[2])))
+            return Variable(np.add(self, np.tile(other[..., np.newaxis], self.shape[2])))
         if self.ndim == 2 and other.ndim == 3:
-            return Array(np.add(np.tile(self[..., np.newaxis], other.shape[2]), other))
+            return Variable(np.add(np.tile(self[..., np.newaxis], other.shape[2]), other))
         return np.add(self, other)
 
     def __iadd__(self, other):
@@ -51,9 +51,9 @@ class Variable(np.ndarray):
         # Stimuli id represents dimension 3.
         # Matrix multiplication between 3D arrays is the matrix multiplication between respective matrix slices
         if self.ndim > 2 or other.ndim > 2:
-            return Array(np.einsum('ij...,jl...->il...', self, other))
+            return Variable(np.einsum('ij...,jl...->il...', self, other))
         return super().__matmul__(other)
 
     @property
     def T(self):
-        return Array(np.swapaxes(self, 0, 1))
+        return Variable(np.swapaxes(self, 0, 1))
