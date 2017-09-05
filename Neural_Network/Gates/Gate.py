@@ -2,7 +2,7 @@ import numpy as np
 
 
 # Return cached value if already computed for current stimulus
-def _cache(method):
+def cache(method):
     def decorator(self, *args, **kwargs):
         if self._cached_stimulus == args[0]:
             self._cached_stimulus = args[0]
@@ -16,7 +16,7 @@ def _cache(method):
 
 
 # Always return initial value computed by function
-def _store(method):
+def store(method):
     def decorator(self, **kwargs):
         if not getattr(self, '_stored_' + method.__name__):
             setattr(self, '_stored_' + method.__name__, method(self, **kwargs))
@@ -48,6 +48,7 @@ class Gate(object):
         if variable not in self.variables:
             return grad @ np.zeros(self(stimulus).shape)
 
+        # Gradients passed along a branch need to be sliced to the portion relevant to the child
         gradients = []
         cursor = 0
         for child in self.children:
@@ -56,12 +57,12 @@ class Gate(object):
         return np.vstack(gradients)
 
     @property
-    @_store
+    @store
     def output_nodes(self):
         return sum([child.output_nodes for child in self.children])
 
     @property
-    @_store
+    @store
     def input_nodes(self):
         """Count the number of input nodes"""
         node_count = 0
@@ -73,7 +74,7 @@ class Gate(object):
         return node_count
 
     @property
-    @_store
+    @store
     def variables(self):
         """List the input variables"""
         variables = list(self._variables.values())
@@ -87,7 +88,7 @@ class Stimulus(Gate):
         super().__init__(children=[])
         self.environment = environment
 
-    @_cache
+    @cache
     def __call__(self, stimulus):
         return stimulus[self.environment.tag]
 
