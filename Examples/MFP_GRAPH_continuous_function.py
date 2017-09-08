@@ -122,9 +122,11 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
 
 # ~~~ Create the network ~~~
 graph = Logistic(Transform(Stimulus(environment), 8))
+loss = SumSquared(graph, environment)
 variables = graph.variables
 
 # ~~~ Test the network ~~~
 [stimuli, expectation] = environment.sample()
+print(loss.gradient({environment.tag: stimuli}))
 print(graph.gradient({environment.tag: stimuli}, variables[0], np.ones([1, 2])))
 print(graph({environment.tag: stimuli}))

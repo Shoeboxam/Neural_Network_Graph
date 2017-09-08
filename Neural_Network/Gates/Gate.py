@@ -29,6 +29,10 @@ class Gate(object):
         if type(children) is not list:
             children = [children]
         self.children = children
+        self.parents = []
+
+        for child in children:
+            child.parents.append(self)
 
         # Stores references to variables in the gate
         self._variables = {}
@@ -41,8 +45,19 @@ class Gate(object):
         self._cached___call__ = None
         self._cached_gradient = {}
 
-    def __call__(self, stimulus):
-        return np.vstack([child(stimulus) for child in self.children])
+    def __call__(self, stimulus, parent=None):
+        features = np.vstack([child(stimulus, self) for child in self.children])
+
+        # Split a feature vector with respect to multiple parents
+        if parent in self.parents:
+            cursor = 0
+
+            for par in self.parents:
+                if parent is par:
+                    break
+                cursor += par.input_nodes
+            features = features[cursor:cursor + parent.input_nodes, :]
+        return features
 
     def gradient(self, stimulus, variable, grad):
         if variable not in self.variables:
