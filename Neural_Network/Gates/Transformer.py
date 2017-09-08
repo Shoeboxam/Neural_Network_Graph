@@ -20,7 +20,7 @@ class Transform(Gate):
     def gradient(self, stimulus, variable, grad):
         propagated = super().__call__(stimulus)
         if variable is self._variables['weights']:
-            # Full derivative: This is a tensor product simplification to avoid the use of the kron product
+            # This is a tensor product simplification to avoid the use of the kron product
             return grad.T @ propagated[None]
         if variable is self._variables['biases']:
             return grad
