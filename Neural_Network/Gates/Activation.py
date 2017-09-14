@@ -3,24 +3,23 @@ from .Gate import *
 
 class Logistic(Gate):
     @cache
-    def __call__(self, stimulus):
-        return 1.0 / (1.0 + np.exp(-super().__call__(stimulus)))
+    def propagate(self, features):
+        return 1.0 / (1.0 + np.exp(-features))
 
     @cache
-    def gradient(self, stimulus, variable, grad):
-        return super().gradient(stimulus, variable, grad * self(stimulus) * (1.0 - self(stimulus)))
+    def backpropagate(self, features, variable, grad):
+        return grad * self.propagate(features) * (1.0 - self.propagate(features))
 
 
 class Softmax(Gate):
     @cache
-    def __call__(self, stimulus):
-        unnormalized = np.exp(super().__call__(stimulus) - super().__call__(stimulus).max())
+    def propagate(self, feature):
+        unnormalized = np.exp(feature - feature.max())  # Max is used for numerical stability
         return unnormalized / np.sum(unnormalized)
 
     @cache
-    def gradient(self, stimulus, variable, grad):
-        jacobian = diag_3d(self(stimulus)) - super().__call__(stimulus) @ super().__call__(stimulus).T
-        return super().gradient(stimulus, variable, grad @ jacobian)
+    def backpropagate(self, feature, variable, grad):
+        return grad @ (diag_3d(self.propagate(feature)) - feature @ feature.T)
 
 
 def diag_3d(self):

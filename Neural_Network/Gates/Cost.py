@@ -10,12 +10,12 @@ class SumSquared(Gate):
         self.environment = environment
 
     @cache
-    def __call__(self, stimulus, expected):
-        return np.average((expected[self.environment.tag] - super().__call__(stimulus))**2, axis=0)
+    def propagate(self, features, expected):
+        return np.average((expected[self.environment.tag] - features)**2, axis=0)
 
     @cache
-    def gradient(self, stimulus, variable, expected):
-        return super().gradient(stimulus, variable, -2 * (expected[self.environment.tag] - super().__call__(stimulus)))
+    def backpropagate(self, features, variable, expected):
+        return -2 * (expected[self.environment.tag] - features)
 
 
 class CrossEntropy(Gate):
@@ -24,16 +24,14 @@ class CrossEntropy(Gate):
         self.environment = environment
 
     @cache
-    def __call__(self, stimulus, expected: np.ndarray):
+    def propagate(self, features, expected):
         expect = expected[self.environment.tag]
-        predict = super().__call__(stimulus)
-        return -np.average(expect * np.log(predict) + (1 - expect) * np.log(1 - predict))
+        return -np.average(expect * np.log(features) + (1 - expect) * np.log(1 - features))
 
     @cache
-    def gradient(self, stimulus, variable, expected):
+    def backpropagate(self, features, variable, expected):
         expect = expected[self.environment.tag]
-        predict = super().__call__(stimulus)
-        return super().gradient(stimulus, variable, -(expect - predict) / (predict * (1 - predict)))
+        return -(expect - features) / (features * (1 - features))
 
 
 class CrossEntropySoftmax(Gate):
@@ -44,12 +42,12 @@ class CrossEntropySoftmax(Gate):
         self.environment = environment
 
     @cache
-    def __call__(self, stimulus, expected):
-        return -np.average(expected[self.environment.tag] * np.log(super().__call__(stimulus)))
+    def propagate(self, features, expected):
+        return -np.average(expected[self.environment.tag] * np.log(features))
 
     @cache
-    def gradient(self, stimulus, variable, expected):
-        return super().gradient(stimulus, variable, -(expected[self.environment.tag] - super().__call__(stimulus)))
+    def gradient(self, features, variable, expected):
+        return -(expected[self.environment.tag] - features)
 
 
 class AngularSeparation(Gate):
@@ -58,10 +56,9 @@ class AngularSeparation(Gate):
         self.environment = environment
 
     @cache
-    def __call__(self, stimulus, expected):
-        return np.arccos(expected[self.environment.tag].T @ super().__call__(stimulus))
+    def propagate(self, features, expected):
+        return np.arccos(expected[self.environment.tag].T @ features)
 
     @cache
-    def gradient(self, stimulus, variable, expected):
-        grad = -expected[self.environment.tag] / np.sqrt(1 + expected[self.environment.tag].T @ super().__call__(stimulus))
-        return super().gradient(stimulus, variable, grad)
+    def gradient(self, features, variable, expected):
+        return -expected[self.environment.tag] / np.sqrt(1 + expected[self.environment.tag].T @ features)

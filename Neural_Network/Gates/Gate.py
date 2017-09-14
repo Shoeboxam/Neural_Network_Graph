@@ -29,8 +29,8 @@ class Gate(object):
         if type(children) is not list:
             children = [children]
         self.children = children
-        self.parents = []
 
+        self.parents = []
         for child in children:
             child.parents.append(self)
 
@@ -45,8 +45,11 @@ class Gate(object):
         self._cached___call__ = None
         self._cached_gradient = {}
 
+    # Forward pass
     def __call__(self, stimulus, parent=None):
         features = np.vstack([child(stimulus, self) for child in self.children])
+
+        features = self.propagate(features)
 
         # Split a feature vector with respect to multiple parents
         if parent in self.parents:
@@ -60,16 +63,26 @@ class Gate(object):
         return features
 
     def gradient(self, stimulus, variable, grad):
-        if variable not in self.variables:
-            return grad @ np.zeros(self(stimulus).shape)
+        features = np.vstack([child(stimulus, self) for child in self.children])
 
-        # Gradients passed along a branch need to be sliced to the portion relevant to the child
-        gradients = []
-        cursor = 0
-        for child in self.children:
-            gradients.append(child.gradient(stimulus, variable, grad[:, cursor:cursor + child.output_nodes]))
-            cursor += child.output_nodes
-        return np.vstack(gradients)
+        if variable in self._variables:
+            return self.backpropagate(features, variable, grad)
+        else:
+            grad = self.backpropagate(features, variable, grad)
+            # Gradients passed along a branch need to be sliced to the portion relevant to the child
+            gradients = []
+            cursor = 0
+            for child in self.children:
+                gradients.append(child.gradient(stimulus, variable, grad[:, cursor:cursor + child.output_nodes]))
+                cursor += child.output_nodes
+            return np.vstack(gradients)
+
+    # Define propagation in child classes
+    def propagate(self, features):
+        return features
+
+    def backpropagate(self, feature, variable, gradient):
+        return gradient  # @ [IMPLEMENTATION]
 
     @property
     @store
@@ -104,11 +117,11 @@ class Stimulus(Gate):
         self.environment = environment
 
     @cache
-    def __call__(self, stimulus):
+    def propagate(self, stimulus):
         return stimulus[self.environment.tag]
 
     @property
-    def gradient(self, stimulus, variable, grad):
+    def backpropagate(self, features, variable, grad):
         if variable is self.environment:
             return np.eye(self.output_nodes)
         return np.zeros([self.output_nodes] * 2)

@@ -14,17 +14,16 @@ class Transform(Gate):
         return self._variables['weights'].shape[0]
 
     @cache
-    def __call__(self, stimulus):
-        return self._variables['weights'] @ super().__call__(stimulus) + self._variables['biases']
+    def propagate(self, features):
+        return self._variables['weights'] @ features + self._variables['biases']
 
-    def gradient(self, stimulus, variable, grad):
-        propagated = super().__call__(stimulus)
+    def backpropagate(self, features, variable, grad):
         if variable is self._variables['weights']:
             # This is a tensor product simplification to avoid the use of the kron product
-            return grad.T @ propagated[None]
+            return grad.T @ features[None]
         if variable is self._variables['biases']:
             return grad
-        return super().gradient(stimulus, variable, grad @ self._variables['weights'])
+        return grad @ self._variables['weights']
 
 
 class TransformRecurrent(Transform):
@@ -40,22 +39,22 @@ class TransformRecurrent(Transform):
         self._prediction = np.zeros((self.output_nodes, 1))
 
     @cache
-    def __call__(self, stimulus):
+    def propagate(self, features):
         recurrent = self._variables['internal'] @ self._prediction
-        propagated = np.vstack((super(super(), self).__call__(stimulus), self.decay * recurrent))
+        features = np.vstack((features, self.decay * recurrent))
 
-        self._prediction = self._variables['weights'] @ propagated + self._variables['biases']
+        self._prediction = self._variables['weights'] @ features + self._variables['biases']
         return self._prediction
 
-    def gradient(self, stimulus, variable, grad):
-        propagated = super(super(), self).__call__(stimulus)
+    def backpropagate(self, features, variable, grad):
         if variable is self._variables['weights']:
-            return grad.T @ propagated[None] @ (1 + self._variables['internal'])
+            return grad.T @ features[None] @ (1 + self._variables['internal'])
         if variable is self._variables['biases']:
             return grad @ (1 + self._variables['internal'])
         if variable is self._variables['internal']:
-            return grad.T @ propagated[None]
-        return super().gradient(stimulus, variable, grad[:, self.output_nodes:] @ self._variables['weights'])
+            return grad.T @ features[None]
+        # Gradients on recurrent nodes don't get passed back
+        return grad[:, self.output_nodes:] @ self._variables['weights']
 
     @property
     def input_nodes(self):
