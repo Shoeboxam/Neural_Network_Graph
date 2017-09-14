@@ -13,13 +13,13 @@ class Logistic(Gate):
 
 class Softmax(Gate):
     @cache
-    def propagate(self, feature):
-        unnormalized = np.exp(feature - feature.max())  # Max is used for numerical stability
+    def propagate(self, features):
+        unnormalized = np.exp(features - features.max())  # Max is used for numerical stability
         return unnormalized / np.sum(unnormalized)
 
     @cache
-    def backpropagate(self, feature, variable, grad):
-        return grad @ (diag_3d(self.propagate(feature)) - feature @ feature.T)
+    def backpropagate(self, features, variable, grad):
+        return grad @ (diag_3d(self.propagate(features)) - features @ features.T)
 
 
 def diag_3d(self):

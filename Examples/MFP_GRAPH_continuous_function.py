@@ -121,7 +121,7 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
 # environment = Continuous([lambda v: (24 * v**4 - 2 * v**2 + v)], domain=[[-1, 1]])
 
 # ~~~ Create the network ~~~
-graph = Logistic(Transform(Stimulus(environment), 8))
+graph = Logistic(Transform(Source(environment), 8))
 loss = SumSquared(graph, environment)
 variables = graph.variables
 

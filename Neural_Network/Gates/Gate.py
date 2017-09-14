@@ -1,4 +1,5 @@
 import numpy as np
+from .Operators import Add, Matmul
 
 
 # Return cached value if already computed for current stimulus
@@ -81,8 +82,8 @@ class Gate(object):
     def propagate(self, features):
         return features
 
-    def backpropagate(self, feature, variable, gradient):
-        return gradient  # @ [IMPLEMENTATION]
+    def backpropagate(self, features, variable, gradient):
+        return gradient
 
     @property
     @store
@@ -110,8 +111,14 @@ class Gate(object):
             variables.extend(child.variables)
         return variables
 
+    def __matmul__(self, other):
+        return Matmul((self, other))
 
-class Stimulus(Gate):
+    def __add__(self, other):
+        return Add((self, other))
+
+
+class Source(Gate):
     def __init__(self, environment):
         super().__init__(children=[])
         self.environment = environment

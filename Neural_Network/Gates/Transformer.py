@@ -2,30 +2,7 @@ from .Gate import *
 from Neural_Network.Variable import Variable
 
 
-class Transform(Gate):
-    def __init__(self, children, nodes):
-        super().__init__(children)
-        self._variables = {
-            'weights': Variable(np.random.normal(size=(nodes, self.input_nodes))),
-            'biases': Variable(np.zeros((nodes, 1)))}
-
-    @property
-    def output_nodes(self):
-        return self._variables['weights'].shape[0]
-
-    @cache
-    def propagate(self, features):
-        return self._variables['weights'] @ features + self._variables['biases']
-
-    def backpropagate(self, features, variable, grad):
-        if variable is self._variables['weights']:
-            # This is a tensor product simplification to avoid the use of the kron product
-            return grad.T @ features[None]
-        if variable is self._variables['biases']:
-            return grad
-        return grad @ self._variables['weights']
-
-
+# I broke the Transform into elementary operations-- now this needs rewriting
 class TransformRecurrent(Transform):
     def __init__(self, children, nodes, decay=1.0):
         super().__init__(children, nodes)
