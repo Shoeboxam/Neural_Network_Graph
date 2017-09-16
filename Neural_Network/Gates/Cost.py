@@ -1,78 +1,79 @@
 from Neural_Network.Gate import *
 import numpy as np
 
+
 # NOTE: The signatures of cost functions do not match the parent class
+class Cost(Gate):
+    def __init__(self, predictions, expectations):
+        super().__init__(predictions)
+        if type(expectations) is not list:
+            expectations = [expectations]
+        self.expectations = expectations
+
+    def __call__(self, stimulus, expected):
+        prediction = self.propagate([child(stimulus, self) for child in self.children])
+        expectation = expected([child(expected, self) for child in self.expectations])
+        return self.propagate(prediction, expectation)
+
+    def gradient(self, stimulus, expected):
+        prediction = self.propagate([child(stimulus, self) for child in self.children])
+        expectation = expected([child(expected, self) for child in self.expectations])
+        return self.backpropagate(prediction, expectation)
+
+    def propagate(self, prediction, expectation):
+        raise NotImplementedError("Cost is an abstract base class, and propagate is not defined.")
+
+    def backpropagate(self, prediction, expectation):
+        raise NotImplementedError("Cost is an abstract base class, and backpropagate is not defined.")
 
 
-class SumSquared(Gate):
-    def __init__(self, children, environment):
-        super().__init__(children)
-        self.environment = environment
+class SumSquared(Cost):
+    @cache
+    def propagate(self, prediction, expectation):
+        return np.average((expectation - prediction)**2, axis=0)
 
     @cache
-    def propagate(self, predicted, expected):
-        return np.average((expected[self.environment.tag] - features)**2, axis=0)
+    def backpropagate(self, prediction, expectation):
+        return -2 * (expectation - prediction)
+
+
+class CrossEntropy(Cost):
+    @cache
+    def propagate(self, prediction, expectation):
+        return -np.average(expectation * np.log(prediction) + (1 - expectation) * np.log(1 - prediction))
 
     @cache
-    def backpropagate(self, predicted, variable, expected):
-        return -2 * (expected[self.environment.tag] - predicted)
+    def backpropagate(self, prediction, expectation):
+        return -(expectation - prediction) / (prediction * (1 - prediction))
 
 
-class CrossEntropy(Gate):
-    def __init__(self, children, environment):
-        super().__init__(children)
-        self.environment = environment
-
-    @cache
-    def propagate(self, predicted, expected):
-        expect = expected[self.environment.tag]
-        return -np.average(expect * np.log(predicted) + (1 - expect) * np.log(1 - predicted))
-
-    @cache
-    def backpropagate(self, predicted, variable, expected):
-        expect = expected[self.environment.tag]
-        return -(expect - predicted) / (predicted * (1 - predicted))
-
-
-class CrossEntropySoftmax(Gate):
+class CrossEntropySoftmax(Cost):
     # Combination of cross entropy and softmax.
     # Train a classifier with CrossEntropySoftmax, and then add a Softmax to the trained network
-    def __init__(self, children, environment):
-        super().__init__(children)
-        self.environment = environment
+    @cache
+    def propagate(self, prediction, expectation):
+        return -np.average(expectation * np.log(prediction))
 
     @cache
-    def propagate(self, predicted, expected):
-        return -np.average(expected[self.environment.tag] * np.log(predicted))
+    def backpropagate(self, prediction, expectation):
+        return -(expectation - prediction)
+
+
+class AngularSeparation(Cost):
+    @cache
+    def propagate(self, prediction, expectation):
+        return np.arccos(expectation.T @ prediction)
 
     @cache
-    def gradient(self, predicted, variable, expected):
-        return -(expected[self.environment.tag] - predicted)
+    def backpropagate(self, prediction, expectation):
+        return -expectation / np.sqrt(1 + expectation.T @ prediction)
 
 
-class AngularSeparation(Gate):
-    def __init__(self, children, environment):
-        super().__init__(children)
-        self.environment = environment
+class KullbackLiebler(Cost):
+    @cache
+    def propagate(self, prediction, expectation):
+        return np.sum(prediction @ np.log(prediction / expectation))
 
     @cache
-    def propagate(self, predicted, expected):
-        return np.arccos(expected[self.environment.tag].T @ predicted)
-
-    @cache
-    def gradient(self, predicted, variable, expected):
-        return -expected[self.environment.tag] / np.sqrt(1 + expected[self.environment.tag].T @ predicted)
-
-
-class KullbackLiebler(Gate):
-    def __init__(self, children, environment):
-        super().__init__(children)
-        self.environment = environment
-
-    @cache
-    def propagate(self, predicted, expected):
-        return np.sum(predicted @ np.log(predicted / expected))
-
-    @cache
-    def gradient(self, predicted, variable, expected):
-        return -predicted / expected
+    def backpropagate(self, prediction, expectation):
+        return -prediction / expectation

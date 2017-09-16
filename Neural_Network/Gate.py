@@ -1,5 +1,5 @@
 import numpy as np
-from .Operators import Add, Matmul
+from .Operator import Add, Matmul
 
 
 # Return cached value if already computed for current stimulus
@@ -25,6 +25,22 @@ def store(method):
     return decorator
 
 
+# Slice the gradient to just the portion relative to a given branch
+def grad_slice(method):
+    def decorator(self, features, variable, gradient):
+        gradient = method(self, features, variable, gradient)
+
+        derivatives = {}
+        cursor = 0
+
+        for child in self.children:
+            if variable in child.variables:
+                derivatives[child] = gradient[:, cursor:cursor + child.output_nodes]
+            cursor += child.output_nodes
+        return derivatives
+    return decorator
+
+
 class Gate(object):
     def __init__(self, children):
         if type(children) is not list:
@@ -34,9 +50,6 @@ class Gate(object):
         self.parents = []
         for child in children:
             child.parents.append(self)
-
-        # Stores references to variables in the gate
-        self._variables = {}
 
         self._stored_variables = None
         self._stored_input_nodes = None
@@ -48,9 +61,7 @@ class Gate(object):
 
     # Forward pass
     def __call__(self, stimulus, parent=None):
-        features = np.vstack([child(stimulus, self) for child in self.children])
-
-        features = self.propagate(features)
+        features = self.propagate([child(stimulus, self) for child in self.children])
 
         # Split a feature vector with respect to multiple parents
         if parent in self.parents:
@@ -58,37 +69,33 @@ class Gate(object):
 
             for par in self.parents:
                 if parent is par:
-                    break
+                    return features[cursor:cursor + parent.input_nodes]
                 cursor += par.input_nodes
-            features = features[cursor:cursor + parent.input_nodes, :]
         return features
 
     def gradient(self, stimulus, variable, grad):
-        features = np.vstack([child(stimulus, self) for child in self.children])
-
-        grad = self.backpropagate(features, variable, grad)
-
-        # Variables cannot be reused in the same branch of the same network
-        if variable in self._variables:
-            return grad
+        derivatives = self.backpropagate([child(stimulus, self) for child in self.children], variable, grad)
 
         # Gradients passed along a branch need to be sliced to the portion relevant to the child
-        gradients = []
-        cursor = 0
+        accumulator = []
+
+        # Either the derivative is complete, or compute the complete derivative
         for child in self.children:
-            if variable in child.variables:
-                gradients.append(child.gradient(stimulus, variable, grad[:, cursor:cursor + child.output_nodes]))
-                cursor += child.output_nodes
-            else:
-                gradients.append(np.zeros())
-        return np.vstack(gradients)
+            if child in derivatives.keys():
+                if variable is child:
+                    accumulator.append(derivatives[variable])
+                elif variable in child.variables:
+                    accumulator.append(child.gradient(stimulus, variable, derivatives[child]))
+
+        # Sum derivative for all instances of variable in the branch
+        return np.sum(accumulator)
 
     # Define propagation in child classes
     def propagate(self, features):
-        return features
+        raise NotImplementedError("Gate is an abstract base class, and propagate is not defined.")
 
     def backpropagate(self, features, variable, gradient):
-        return gradient
+        raise NotImplementedError("Gate is an abstract base class, and backpropagate is not defined.")
 
     @property
     @store
@@ -111,9 +118,8 @@ class Gate(object):
     @store
     def variables(self):
         """List the input variables"""
-        variables = list(self._variables.values())
-        for child in self.children:
-            variables.extend(child.variables)
+        variables = []
+        [variables.extend(child.variables) for child in self.children]
         return variables
 
     def __matmul__(self, other):
