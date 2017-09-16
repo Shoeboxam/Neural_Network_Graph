@@ -66,17 +66,22 @@ class Gate(object):
     def gradient(self, stimulus, variable, grad):
         features = np.vstack([child(stimulus, self) for child in self.children])
 
+        grad = self.backpropagate(features, variable, grad)
+
+        # Variables cannot be reused in the same branch of the same network
         if variable in self._variables:
-            return self.backpropagate(features, variable, grad)
-        else:
-            grad = self.backpropagate(features, variable, grad)
-            # Gradients passed along a branch need to be sliced to the portion relevant to the child
-            gradients = []
-            cursor = 0
-            for child in self.children:
+            return grad
+
+        # Gradients passed along a branch need to be sliced to the portion relevant to the child
+        gradients = []
+        cursor = 0
+        for child in self.children:
+            if variable in child.variables:
                 gradients.append(child.gradient(stimulus, variable, grad[:, cursor:cursor + child.output_nodes]))
                 cursor += child.output_nodes
-            return np.vstack(gradients)
+            else:
+                gradients.append(np.zeros())
+        return np.vstack(gradients)
 
     # Define propagation in child classes
     def propagate(self, features):

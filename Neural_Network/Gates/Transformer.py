@@ -1,4 +1,4 @@
-from .Gate import *
+from Neural_Network.Gate import *
 from Neural_Network.Variable import Variable
 
 
