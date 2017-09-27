@@ -22,7 +22,6 @@ class PairwiseEuclidean(Gate):
         return -(sample_space[..., None] - sample_space[..., None, :])
 
 
-# This was suggested as a possible distance measure for binary stimuli, but I'm skeptical... what about two ones?
 class PairwiseDot(Gate):
     def propagate(self, sample_space):
         return np.einsum('i...,i...->...', sample_space[..., None] - sample_space[..., None, :])

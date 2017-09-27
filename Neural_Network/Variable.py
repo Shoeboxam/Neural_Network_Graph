@@ -9,10 +9,32 @@ class Variable(Gate, np.ndarray):
     # Provides seeds for recursive calls in the graph network
 
     def __new__(cls, a):
-        obj = np.array(a).view(cls)
-        return obj
+        print(a)
+        objList = [sup.__new__(typ) for sup in Variable.__bases__]
+        for obj in objList[1:]:
+            objList[0].__dict__.update(copy.deepcopy(obj.__dict__))
+        objList[0].attr3 = 333
+        return objList[0]
+        super(np.ndarray, cls,)
+        return super(Gate, cls).__new__(cls).view(cls)
+        return np.array(a).view(cls)
 
-    def __call__(self, *args):
+    def __init__(self):
+        super().__init__(children=[])
+        print(self.parents)
+
+    def __call__(self, stimulus, parent=None):
+        # Split a variable with respect to multiple parents
+        if np.isscalar(self):
+            return self
+
+        if parent in self.parents:
+            cursor = 0
+
+            for par in self.parents:
+                if parent is par:
+                    return self[cursor:cursor + parent.input_nodes]
+                cursor += par.input_nodes
         return self
 
     def gradient(self, stimulus, variable, grad):

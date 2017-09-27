@@ -1,14 +1,7 @@
 # Learn a continuous function
 from inspect import signature
-
-# Use custom implementation:
 from Neural_Network import *
 
-# Use Tensorflow wrapper:
-# from MFP_TF import *
-
-
-from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 np.set_printoptions(suppress=True, linewidth=10000)
 
@@ -16,6 +9,7 @@ np.set_printoptions(suppress=True, linewidth=10000)
 class Continuous:
 
     def __init__(self, funct, domain, range=None):
+        super().__init__()
 
         self._size_input = len(signature(funct[0]).parameters)
         self._size_output = len(funct)
@@ -23,7 +17,8 @@ class Continuous:
         self._funct = funct
         self._domain = domain
 
-        self.tag = 'Continuous_' + str(np.random.randint(1000, 9999))
+        self.tag_expected = 'Continuous_expected_' + str(np.random.randint(1000, 9999))
+        self.tag_stimulus = 'Continuous_stimulus_' + str(np.random.randint(1000, 9999))
 
         if range is None:
             self._range = [[-1, 1]] * len(funct)
@@ -73,10 +68,12 @@ class Continuous:
 
         return [np.array(stimulus), np.array(expectation)]
 
+    @property
     def size_input(self):
         return self._size_input
 
-    def size_output(self):
+    @property
+    def output_nodes(self):
         return self._size_output
 
     def plot(self, plt, predict):
@@ -100,10 +97,6 @@ class Continuous:
             ax.view_init(elev=10., azim=self.viewpoint)
             self.viewpoint += 5
 
-    @staticmethod
-    def error(expect, predict):
-        return np.linalg.norm(expect - predict)
-
 # environment = Continuous([lambda a, b: (24 * a**2 - 2 * b**2 + a),
 #                           lambda a, b: (12 * a ** 2 + 12 * b ** 3 + b)], domain=[[-1, 1]] * 2)
 
@@ -121,12 +114,17 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
 # environment = Continuous([lambda v: (24 * v**4 - 2 * v**2 + v)], domain=[[-1, 1]])
 
 # ~~~ Create the network ~~~
-graph = Logistic(Transform(Source(environment), 8))
+weight = np.random.uniform(size=(4, environment.output_nodes)).view(Variable)
+bias = np.random.uniform(size=(4, 1)).view(Variable)
+
+transform = weight @ environment + bias
+graph = Logistic(transform)
 loss = SumSquared(graph, environment)
 variables = graph.variables
 
 # ~~~ Test the network ~~~
 [stimuli, expectation] = environment.sample()
-print(loss.gradient({environment.tag: stimuli}))
-print(graph.gradient({environment.tag: stimuli}, variables[0], np.ones([1, 2])))
-print(graph({environment.tag: stimuli}))
+print(loss.gradient({environment.tag_stimulus: stimuli}, {environment.tag_expected: expectation}, weight))
+
+print(graph.gradient({environment.tag_stimulus: stimuli}, weight, np.ones([1, 2])))
+print(graph({environment.tag_stimulus: stimuli}))

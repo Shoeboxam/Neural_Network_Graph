@@ -1,4 +1,4 @@
-from Neural_Network.Gate import *
+from ..Gate import *
 import numpy as np
 
 
@@ -10,12 +10,13 @@ class Cost(Gate):
             expectations = [expectations]
         self.expectations = expectations
 
-    def __call__(self, stimulus, expected):
+    def __call__(self, stimulus, expected, variable):
         prediction = self.propagate([child(stimulus, self) for child in self.children])
         expectation = expected([child(expected, self) for child in self.expectations])
         return self.propagate(prediction, expectation)
 
-    def gradient(self, stimulus, expected):
+    def gradient(self, stimulus, expected, variable):
+
         prediction = self.propagate([child(stimulus, self) for child in self.children])
         expectation = expected([child(expected, self) for child in self.expectations])
         return self.backpropagate(prediction, expectation)

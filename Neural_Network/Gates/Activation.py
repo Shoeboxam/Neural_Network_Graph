@@ -1,4 +1,4 @@
-from Neural_Network.Gate import *
+from ..Gate import *
 
 
 class Logistic(Gate):
