@@ -50,7 +50,9 @@ class Gate(object):
 
         self.parents = []
         for child in children:
-            child.parents.append(self)
+            # Variables do not need to store parents
+            if hasattr(child, 'parents'):
+                child.parents.append(self)
 
         self._stored_variables = None
         self._stored_input_nodes = None
@@ -62,8 +64,11 @@ class Gate(object):
 
     # Forward pass
     def __call__(self, stimulus, parent=None):
+        print(self.__class__.__name__ + " DOWN")
         features = self.propagate([child(stimulus, self) for child in self.children])
 
+        print(self.__class__.__name__ + " UP")
+        print(features)
         # Split a feature vector with respect to multiple parents
         if parent in self.parents:
             cursor = 0
@@ -129,6 +134,65 @@ class Gate(object):
     def __add__(self, other):
         return Add((self, other))
 
+
+class Variable(np.ndarray):
+    """Datatype for differentiable variables"""
+
+    # Custom operations for 3D and certain non-conformable arrays
+    # Enforces mutability for all numerics
+    # Provides seeds for recursive calls in the graph network
+
+    def __new__(cls, a):
+        obj = np.array(a).view(cls)
+        return obj
+
+    def __init__(self, arr, **kwargs):
+        super().__init__(**kwargs)
+        self.parents = []
+
+    def __call__(self, stimulus, parent=None):
+        # Split a variable with respect to multiple parents
+        if np.isscalar(self):
+            return np.array(self)
+
+        if parent in self.parents:
+            cursor = 0
+
+            for par in self.parents:
+                if parent is par:
+                    return np.array(self)[cursor:cursor + parent.input_nodes]
+                cursor += par.input_nodes
+        return np.array(self)
+
+    def gradient(self, stimulus, variable, grad):
+        if variable is not self:
+            raise ValueError("The gradient should not have been backpropagated here. Not optimal.")
+            # return grad * 0
+
+        return grad  # @ np.eye(self.shape[0])
+
+    @property
+    def output_nodes(self):
+        return self.shape[0]
+
+    @property
+    def input_nodes(self):
+        return 0
+
+    @property
+    def variables(self):
+        return [self]
+
+    def __matmul__(self, other):
+        return Matmul((self, other))
+
+    def __add__(self, other):
+        return Add((self, other))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~
+# Elementary operations
+# ~~~~~~~~~~~~~~~~~~~~~
 
 class Add(Gate):
     def propagate(self, features):

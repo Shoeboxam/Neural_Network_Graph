@@ -1,2 +1,2 @@
 from .Gates import *
-from .Variable import Variable
+from .Gate import Variable

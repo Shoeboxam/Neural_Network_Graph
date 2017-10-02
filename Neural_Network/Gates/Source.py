@@ -7,8 +7,10 @@ class Source(Gate):
         super().__init__(children=[])
 
     @cache
-    def propagate(self, stimulus):
-        return stimulus[repr(self)]
+    def __call__(self, stimulus, parent=None):
+        print(self.__class__.__name__)
+        print(stimulus[self.tag_stimulus])
+        return stimulus[self.tag_stimulus]
 
     @property
     def backpropagate(self, features, variable, grad):

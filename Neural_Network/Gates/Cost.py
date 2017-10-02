@@ -17,7 +17,7 @@ class Cost(Gate):
 
     def gradient(self, stimulus, expected, variable):
 
-        prediction = self.propagate([child(stimulus, self) for child in self.children])
+        prediction = [child(stimulus, self) for child in self.children]
         expectation = expected([child(expected, self) for child in self.expectations])
         return self.backpropagate(prediction, expectation)
 

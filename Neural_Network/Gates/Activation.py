@@ -4,7 +4,7 @@ from ..Gate import *
 class Logistic(Gate):
     @cache
     def propagate(self, features):
-        return 1.0 / (1.0 + np.exp(-features))
+        return 1.0 / (1.0 + np.exp(-np.vstack(features)))
 
     @grad_slice
     @cache

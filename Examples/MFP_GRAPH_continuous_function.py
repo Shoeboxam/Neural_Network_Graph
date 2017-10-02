@@ -6,7 +6,7 @@ import numpy as np
 np.set_printoptions(suppress=True, linewidth=10000)
 
 
-class Continuous:
+class Continuous(Source):
 
     def __init__(self, funct, domain, range=None):
         super().__init__()
@@ -114,8 +114,8 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
 # environment = Continuous([lambda v: (24 * v**4 - 2 * v**2 + v)], domain=[[-1, 1]])
 
 # ~~~ Create the network ~~~
-weight = np.random.uniform(size=(4, environment.output_nodes)).view(Variable)
-bias = np.random.uniform(size=(4, 1)).view(Variable)
+weight = Variable(np.random.uniform(size=(4, environment.output_nodes)))
+bias = Variable(np.random.uniform(size=(4, 1)))
 
 transform = weight @ environment + bias
 graph = Logistic(transform)
