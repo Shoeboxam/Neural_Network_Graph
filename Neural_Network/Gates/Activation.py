@@ -5,8 +5,9 @@ class Logistic(Gate):
     def propagate(self, features):
         return 1.0 / (1.0 + np.exp(-np.vstack(features)))
 
-    @grad_slice
+    # @grad_slice
     def backpropagate(self, features, variable, grad):
+        print(features)
         return grad * self.propagate(features) * (1.0 - self.propagate(features))
 
 

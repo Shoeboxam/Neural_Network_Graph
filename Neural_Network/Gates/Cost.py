@@ -13,7 +13,7 @@ class Cost(Gate):
             expectations = [expectations]
         self.expectations = expectations
 
-    def __call__(self, stimulus, variable):
+    def __call__(self, stimulus):
         predictions = np.vstack([child(stimulus, self) for child in self.children])
         expectation = np.vstack([child(stimulus, self) for child in self.expectations])
         return self.propagate(predictions, expectation)
@@ -21,7 +21,9 @@ class Cost(Gate):
     def gradient(self, stimulus, variable):
         predictions = np.vstack([child(stimulus, self) for child in self.children])
         expectation = np.vstack([child(stimulus, self) for child in self.expectations])
-        return self.backpropagate(predictions, expectation)
+        grad = self.backpropagate(predictions, expectation)
+
+        return np.vstack([child.gradient(stimulus, variable, grad) for child in self.children])
 
     def propagate(self, prediction, expectation):
         raise NotImplementedError("Cost is an abstract base class, and propagate is not defined.")

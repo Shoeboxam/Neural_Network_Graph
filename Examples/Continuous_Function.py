@@ -130,10 +130,7 @@ variables = graph.variables
 
 # ~~~ Test the network ~~~
 sample = environment.sample()
+print(weight.shape)
 print(loss.gradient(sample, weight))
-print(graph(sample))
-
-sample = environment.sample()
-# print(loss.gradient(sample, weight))
-print("NEW")
-print(graph(sample))
+print(loss(sample))
+# print(graph(sample))

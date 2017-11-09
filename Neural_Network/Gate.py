@@ -192,6 +192,10 @@ class Variable(np.ndarray):
     def __add__(self, other):
         return Add((self, other))
 
+    # In the network, variables are intrinsically only equivalent if they share the same reference
+    def __eq__(self, other):
+        return self is other
+
 
 # ~~~~~~~~~~~~~~~~~~~~~
 # Elementary operations
@@ -226,6 +230,10 @@ class Add(Gate):
             if variable is child or variable in child.variables:
                 derivatives[child] = gradient
         return derivatives
+
+    @property
+    def output_nodes(self):
+        return self.children[0].output_nodes
 
 
 class Matmul(Gate):

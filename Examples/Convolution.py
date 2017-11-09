@@ -51,12 +51,17 @@ class ImageSingle(Environment):
     def plot(self, plt, predict):
         plt.imshow(predict)
 
-
-# Create convolution gate
+# Define environment
 image = ImageSingle(image_path)
-source = Source(image, image.tags[0])
+
+# Create entry point for image in network
+source = Source(image, 'stimulus')
+
+# Add a convolution layer
 convolution = Convolve(source, gaussian)
+
+# Call network with a sample image
 convolved = convolution(image.sample(tagged=True))
 
-
+# Convert output back into image
 Image.fromarray(np.clip(convolved, 0, 255).astype(np.uint8)).show()
