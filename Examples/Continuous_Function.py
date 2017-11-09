@@ -102,8 +102,8 @@ class Continuous(Environment):
 # environment = Continuous([lambda a, b: (24 * a**2 - 2 * b**2 + a),
 #                           lambda a, b: (12 * a ** 2 + 12 * b ** 3 + b)], domain=[[-1, 1]] * 2)
 
-environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
-                          lambda a, b: (0.5 * a**3 + 2 * b**2 - b - 23)], domain=[[-1, 1]] * 2)
+environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3),
+                          lambda a, b: (0.5 * a**3 + 2 * b**2 - b)], domain=[[-1, 1]] * 2)
 
 # environment = Continuous([lambda x: np.sin(x),
 #                           lambda x: np.cos(x)], domain=[[-2 * np.pi, 2 * np.pi], [-np.pi, np.pi]])
@@ -129,7 +129,11 @@ loss = SumSquared(graph, codomain)
 variables = graph.variables
 
 # ~~~ Test the network ~~~
-print(loss.gradient(environment.sample(), weight))
+sample = environment.sample()
+print(loss.gradient(sample, weight))
+print(graph(sample))
 
-print(graph.gradient(environment.sample(), weight, np.ones([1, 2])))
-print(graph(environment.sample()))
+sample = environment.sample()
+# print(loss.gradient(sample, weight))
+print("NEW")
+print(graph(sample))

@@ -5,12 +5,12 @@ _scalar = [str, int, float]
 
 # Return cached value if already computed for current stimulus
 def cache(method):
-    def decorator(self, *args, **kwargs):
-        if self._cached_stimulus == args[0]:
-            self._cached_stimulus = args[0]
-            return lambda **kw: getattr(self, '_cached_' + method.__name__)
-        feature = method(self, *args, **kwargs)
+    def decorator(self, stimulus, *args, **kwargs):
+        if getattr(self, '_cached_' + method.__name__ + '_id') == id(stimulus):
+            return getattr(self, '_cached_' + method.__name__)
+        feature = method(self, stimulus, *args, **kwargs)
 
+        setattr(self, '_cached_' + method.__name__ + '_id', id(stimulus))
         setattr(self, '_cached_' + method.__name__, feature)
         return feature
 
@@ -54,15 +54,18 @@ class Gate(object):
             if hasattr(child, 'parents'):
                 child.parents.append(self)
 
-        self._stored_variables = None
-        self._stored_input_nodes = None
-        self._stored_output_nodes = None
+        # self._stored_variables = None
+        # self._stored_input_nodes = None
+        # self._stored_output_nodes = None
 
-        self._cached_stimulus = {}
+        self._cached___call___id = 0
         self._cached___call__ = None
-        self._cached_gradient = {}
+
+        self._cached_gradient_id = 0
+        self._cached_gradient = None
 
     # Forward pass
+    @cache
     def __call__(self, stimulus, parent=None):
         # print(self.__class__.__name__ + " DOWN")
         features = self.propagate([child(stimulus, self) for child in self.children])
@@ -78,6 +81,7 @@ class Gate(object):
                 cursor += par.input_nodes
         return features
 
+    @cache
     def gradient(self, stimulus, variable, grad):
         derivatives = self.backpropagate([child(stimulus, self) for child in self.children], variable, grad)
 
@@ -103,12 +107,12 @@ class Gate(object):
         raise NotImplementedError("Gate is an abstract base class, and backpropagate is not defined.")
 
     @property
-    @store
+    # @store
     def output_nodes(self):
         return sum([child.output_nodes for child in self.children])
 
     @property
-    @store
+    # @store
     def input_nodes(self):
         """Count the number of input nodes"""
         node_count = 0
@@ -120,7 +124,7 @@ class Gate(object):
         return node_count
 
     @property
-    @store
+    # @store
     def variables(self):
         """List the input variables"""
         variables = []
@@ -231,7 +235,7 @@ class Matmul(Gate):
 
     def propagate(self, features):
         left = features[0]
-        right = features[0]
+        right = features[1]
 
         if type(left) in _scalar or type(right) in _scalar:
             return left * right

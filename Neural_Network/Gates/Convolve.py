@@ -8,7 +8,6 @@ class Convolve(Gate):
         super().__init__(children)
         self.kernel = kernel
 
-    @cache
     def propagate(self, features):
         # Combine features from all children
         features = np.vstack(features)
@@ -27,7 +26,6 @@ class Convolve(Gate):
         return np.einsum("ij...,ij->...", samples, self.kernel)
 
     @grad_slice
-    @cache
     def backpropagate(self, features, variable, grad):
         # Not implemented
         return grad

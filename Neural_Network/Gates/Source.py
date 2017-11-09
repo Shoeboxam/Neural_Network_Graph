@@ -12,7 +12,6 @@ class Source(Gate):
         self.tag = tag
 
     # Source is the network seed, so branching and pass-through logic is unnecessary and overriden
-    @cache
     def __call__(self, stimulus, parent=None):
         return self.propagate(stimulus)
 
