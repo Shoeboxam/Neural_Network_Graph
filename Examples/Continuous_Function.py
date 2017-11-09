@@ -6,24 +6,20 @@ import numpy as np
 np.set_printoptions(suppress=True, linewidth=10000)
 
 
-class Continuous(Source):
+class Continuous(Environment):
 
     def __init__(self, funct, domain, range=None):
-        super().__init__()
 
-        self._size_input = len(signature(funct[0]).parameters)
-        self._size_output = len(funct)
+        self._size_stimulus = len(signature(funct[0]).parameters)
+        self._size_expected = len(funct)
 
         self._funct = funct
         self._domain = domain
 
-        self.tag_expected = 'Continuous_expected_' + str(np.random.randint(1000, 9999))
-        self.tag_stimulus = 'Continuous_stimulus_' + str(np.random.randint(1000, 9999))
-
         if range is None:
             self._range = [[-1, 1]] * len(funct)
 
-            if self._size_input == 1 and self._size_output == 1:
+            if self._size_stimulus == 1 and self._size_expected == 1:
                 candidates = self._funct[0](np.linspace(*self._domain[0], num=100))
                 self._range = [[min(candidates), max(candidates)]]
         else:
@@ -31,14 +27,17 @@ class Continuous(Source):
 
         self.viewpoint = np.random.randint(0, 360)
 
-    def sample(self, quantity=1):
-        # Generate random values for each input stimulus
+    @Environment._tag
+    def sample(self, quantity):
+        if quantity is None:
+            quantity = 1
 
+        # Generate random values for each input stimulus
         axes = []
-        for idx in range(self._size_input):
+        for idx in range(self._size_stimulus):
             axes.append(np.random.uniform(low=self._domain[idx][0], high=self._domain[idx][1], size=quantity))
 
-        meshgrid = np.array(np.meshgrid(*axes)).reshape(self._size_input, -1)
+        meshgrid = np.array(np.meshgrid(*axes)).reshape(self._size_stimulus, -1)
 
         # Subsample meshgrid
         axes_selections = np.random.randint(meshgrid.shape[1], size=quantity)
@@ -51,15 +50,19 @@ class Continuous(Source):
 
         return [np.array(stimulus), np.array(expectation)]
 
-    def survey(self, quantity=128):
+    @Environment._tag
+    def survey(self, quantity):
+        if quantity is None:
+            quantity = 128
+
         # Quantity is adjusted to the closest meshgrid approximation
-        axis_length = int(round(quantity**self._size_input**-1))
+        axis_length = int(round(quantity ** self._size_stimulus ** -1))
 
         axes = []
-        for idx in range(self._size_input):
+        for idx in range(self._size_stimulus):
             axes.append(np.linspace(start=self._domain[idx][0], stop=self._domain[idx][1], num=axis_length))
 
-        stimulus = np.array(np.meshgrid(*axes)).reshape(self._size_input, -1)
+        stimulus = np.array(np.meshgrid(*axes)).reshape(self._size_stimulus, -1)
 
         # Evaluate each function with the stimuli
         expectation = []
@@ -68,13 +71,12 @@ class Continuous(Source):
 
         return [np.array(stimulus), np.array(expectation)]
 
-    @property
-    def size_input(self):
-        return self._size_input
+    def output_nodes(self, tag):
+        if tag is 'stimulus':
+            return self._size_stimulus
 
-    @property
-    def output_nodes(self):
-        return self._size_output
+        if tag is 'expected':
+            return self._size_expected
 
     def plot(self, plt, predict):
         x, y = self.survey()
@@ -114,17 +116,20 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3 + 50),
 # environment = Continuous([lambda v: (24 * v**4 - 2 * v**2 + v)], domain=[[-1, 1]])
 
 # ~~~ Create the network ~~~
-weight = Variable(np.random.uniform(size=(4, environment.output_nodes)))
+
+domain = Source(environment, 'stimulus')
+codomain = Source(environment, 'expected')
+
+weight = Variable(np.random.uniform(size=(4, domain.output_nodes)))
 bias = Variable(np.random.uniform(size=(4, 1)))
 
-transform = weight @ environment + bias
+transform = weight @ domain + bias
 graph = Logistic(transform)
-loss = SumSquared(graph, environment)
+loss = SumSquared(graph, codomain)
 variables = graph.variables
 
 # ~~~ Test the network ~~~
-[stimuli, expectation] = environment.sample()
-print(loss.gradient({environment.tag_stimulus: stimuli}, {environment.tag_expected: expectation}, weight))
+print(loss.gradient(environment.sample(), weight))
 
-print(graph.gradient({environment.tag_stimulus: stimuli}, weight, np.ones([1, 2])))
-print(graph({environment.tag_stimulus: stimuli}))
+print(graph.gradient(environment.sample(), weight, np.ones([1, 2])))
+print(graph(environment.sample()))

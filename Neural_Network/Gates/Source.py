@@ -1,16 +1,23 @@
 from ..Gate import *
 import numpy as np
 
+# This is one source for the network.
+# Each source instance handles a single tag from the environment class.
+
 
 class Source(Gate):
-    def __init__(self):
+    def __init__(self, source, tag):
         super().__init__(children=[])
+        self.source = source
+        self.tag = tag
 
+    # Source is the network seed, so branching and pass-through logic is unnecessary and overriden
     @cache
     def __call__(self, stimulus, parent=None):
-        print(self.__class__.__name__)
-        print(stimulus[self.tag_stimulus])
-        return stimulus[self.tag_stimulus]
+        return self.propagate(stimulus)
+
+    def propagate(self, stimulus):
+        return stimulus[self.tag]
 
     @property
     def backpropagate(self, features, variable, grad):
@@ -20,13 +27,7 @@ class Source(Gate):
 
     @property
     def output_nodes(self):
-        raise NotImplementedError("Source is an abstract base class.")
-
-    def sample(self, quantity):
-        raise NotImplementedError("Source is an abstract base class.")
-
-    def survey(self, quantity):
-        raise NotImplementedError("Source is an abstract base class.")
+        return self.source.output_nodes(tag=self.tag)
 
     @property
     def input_nodes(self):
@@ -34,18 +35,3 @@ class Source(Gate):
         #   First:  0 - source; 1 - label
         #   Second: Input tag
         return 2
-
-    @property
-    def output_nodes(self):
-        raise NotImplementedError("Source is an abstract base class.")
-
-    @property
-    def output_labels(self):
-        raise NotImplementedError("Source is an abstract base class.")
-
-    def plot(self, plt, predict):
-        pass
-
-    @staticmethod
-    def error(expect, predict):
-        return np.linalg.norm(expect - predict)

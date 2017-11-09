@@ -64,11 +64,10 @@ class Gate(object):
 
     # Forward pass
     def __call__(self, stimulus, parent=None):
-        print(self.__class__.__name__ + " DOWN")
+        # print(self.__class__.__name__ + " DOWN")
         features = self.propagate([child(stimulus, self) for child in self.children])
 
-        print(self.__class__.__name__ + " UP")
-        print(features)
+        # print(self.__class__.__name__ + " UP")
         # Split a feature vector with respect to multiple parents
         if parent in self.parents:
             cursor = 0
