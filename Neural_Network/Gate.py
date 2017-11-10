@@ -26,33 +26,11 @@ def store(method):
     return decorator
 
 
-# Slice the gradient to just the portion relative to a given branch
-def grad_slice(method):
-    def decorator(self, features, variable, gradient):
-        gradient = method(self, features, variable, gradient)
-
-        derivatives = {}
-        cursor = 0
-
-        for child in self.children:
-            if variable in child.variables:
-                derivatives[child] = gradient[:, cursor:cursor + child.output_nodes]
-            cursor += child.output_nodes
-        return derivatives
-    return decorator
-
-
 class Gate(object):
     def __init__(self, children):
         if type(children) not in [list, tuple]:
             children = [children]
         self.children = children
-
-        self.parents = []
-        for child in children:
-            # Variables do not need to store parents
-            if hasattr(child, 'parents'):
-                child.parents.append(self)
 
         # self._stored_variables = None
         # self._stored_input_nodes = None
@@ -66,20 +44,9 @@ class Gate(object):
 
     # Forward pass
     @cache
-    def __call__(self, stimulus, parent=None):
+    def __call__(self, stimulus):
         # print(self.__class__.__name__ + " DOWN")
-        features = self.propagate([child(stimulus, self) for child in self.children])
-
-        # print(self.__class__.__name__ + " UP")
-        # Split a feature vector with respect to multiple parents
-        if parent in self.parents:
-            cursor = 0
-
-            for par in self.parents:
-                if parent is par:
-                    return features[cursor:cursor + parent.input_nodes]
-                cursor += par.input_nodes
-        return features
+        return self.propagate([child(stimulus, self) for child in self.children])
 
     @cache
     def gradient(self, stimulus, variable, grad):
@@ -151,20 +118,10 @@ class Variable(np.ndarray):
 
     def __init__(self, arr, **kwargs):
         super().__init__(**kwargs)
-        self.parents = []
 
-    def __call__(self, stimulus, parent=None):
-        # Split a variable with respect to multiple parents
+    def __call__(self, stimulus):
         if np.isscalar(self):
             return np.array(self)
-
-        if parent in self.parents:
-            cursor = 0
-
-            for par in self.parents:
-                if parent is par:
-                    return np.array(self)[cursor:cursor + parent.input_nodes]
-                cursor += par.input_nodes
         return np.array(self)
 
     def gradient(self, stimulus, variable, grad):
@@ -258,11 +215,13 @@ class Matmul(Gate):
     def backpropagate(self, features, variable, gradient):
         derivatives = {}
 
+        # Take derivative of left side
         if variable is self.children[0]:
             derivatives[self.children[0]] = gradient.T @ features[1][None]
         elif variable in self.children[0].variables:
             derivatives[self.children[0]] = gradient @ features[1]
 
+        # Take derivative of right side
         if variable is self.children[1]:
             derivatives[self.children[1]] = gradient.T @ features[0][None]
         elif variable in self.children[1].variables:

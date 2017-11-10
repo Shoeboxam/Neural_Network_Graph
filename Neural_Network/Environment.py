@@ -1,7 +1,6 @@
 # There is only one environment for the network.
 # The environment may produce many sources when sampled.
 
-import inspect
 
 class Environment(object):
 

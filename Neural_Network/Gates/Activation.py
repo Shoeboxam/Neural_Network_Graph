@@ -5,7 +5,6 @@ class Logistic(Gate):
     def propagate(self, features):
         return 1.0 / (1.0 + np.exp(-np.vstack(features)))
 
-    # @grad_slice
     def backpropagate(self, features, variable, grad):
         print(features)
         return grad * self.propagate(features) * (1.0 - self.propagate(features))
@@ -16,7 +15,6 @@ class Softmax(Gate):
         unnormalized = np.exp(features - features.max())  # Max is used for numerical stability
         return unnormalized / np.sum(unnormalized)
 
-    @grad_slice
     def backpropagate(self, features, variable, grad):
         return grad @ (diag_3d(self.propagate(features)) - features @ features.T)
 
