@@ -25,7 +25,6 @@ class Convolve(Gate):
         # Contract over first two dimensions
         return np.einsum("ij...,ij->...", samples, self.kernel)
 
-    @grad_slice
     def backpropagate(self, features, variable, grad):
         # Not implemented
         return grad

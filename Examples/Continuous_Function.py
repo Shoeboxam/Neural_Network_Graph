@@ -120,17 +120,22 @@ environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3),
 domain = Source(environment, 'stimulus')
 codomain = Source(environment, 'expected')
 
-weight = Variable(np.random.uniform(size=(4, domain.output_nodes)))
-bias = Variable(np.random.uniform(size=(4, 1)))
+# Layer one
+weight_1 = Variable(np.random.uniform(size=(4, domain.output_nodes)))
+biases_1 = Variable(np.random.uniform(size=(4, 1)))
+hidden_1 = Logistic(weight_1 @ domain + biases_1)
 
-transform = weight @ domain + bias
-graph = Logistic(transform)
+# Layer two
+weight_2 = Variable(np.random.uniform(size=(2, hidden_1.output_nodes)))
+biases_2 = Variable(np.random.uniform(size=(2, 1)))
+graph = Logistic(weight_2 @ hidden_1 + biases_2)
+
+# Loss
 loss = SumSquared(graph, codomain)
 variables = graph.variables
 
 # ~~~ Test the network ~~~
 sample = environment.sample()
-print(weight.shape)
-print(loss.gradient(sample, weight))
-print(loss(sample))
+print(loss.gradient(sample, weight_1).shape)
+loss(sample)
 # print(graph(sample))

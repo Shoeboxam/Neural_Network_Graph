@@ -14,13 +14,13 @@ class Cost(Gate):
         self.expectations = expectations
 
     def __call__(self, stimulus):
-        predictions = np.vstack([child(stimulus, self) for child in self.children])
-        expectation = np.vstack([child(stimulus, self) for child in self.expectations])
+        predictions = np.vstack([child(stimulus) for child in self.children])
+        expectation = np.vstack([child(stimulus) for child in self.expectations])
         return self.propagate(predictions, expectation)
 
     def gradient(self, stimulus, variable):
-        predictions = np.vstack([child(stimulus, self) for child in self.children])
-        expectation = np.vstack([child(stimulus, self) for child in self.expectations])
+        predictions = np.vstack([child(stimulus) for child in self.children])
+        expectation = np.vstack([child(stimulus) for child in self.expectations])
         grad = self.backpropagate(predictions, expectation)
 
         return np.vstack([child.gradient(stimulus, variable, grad) for child in self.children])

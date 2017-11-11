@@ -46,24 +46,23 @@ class Gate(object):
     @cache
     def __call__(self, stimulus):
         # print(self.__class__.__name__ + " DOWN")
-        return self.propagate([child(stimulus, self) for child in self.children])
+        return self.propagate([child(stimulus) for child in self.children])
 
     @cache
     def gradient(self, stimulus, variable, grad):
-        derivatives = self.backpropagate([child(stimulus, self) for child in self.children], variable, grad)
-
-        # Gradients passed along a branch need to be sliced to the portion relevant to the child
         accumulator = []
 
-        # Either the derivative is complete, or compute the complete derivative
         for child in self.children:
-            if child in derivatives.keys():
-                if variable is child:
-                    accumulator.append(derivatives[variable])
-                elif variable in child.variables:
-                    accumulator.append(child.gradient(stimulus, variable, derivatives[child]))
+            # Derivative is complete
+            if variable is child:
+                accumulator.append(self.backpropagate(child(stimulus), child, grad))
 
-        # Sum derivative for all instances of variable in the branch
+            # Derivative needs to be further backpropagated
+            elif variable in child.variables:
+                derivative = self.backpropagate(child(stimulus), child, grad)
+                accumulator.append(child.gradient(stimulus, variable, derivative))
+
+        # Sum derivative over all branches
         return np.sum(accumulator)
 
     # Define propagation in child classes
@@ -181,12 +180,7 @@ class Add(Gate):
             return left + right
 
     def backpropagate(self, features, variable, gradient):
-        derivatives = {}
-
-        for child in self.children:
-            if variable is child or variable in child.variables:
-                derivatives[child] = gradient
-        return derivatives
+        return gradient
 
     @property
     def output_nodes(self):
@@ -213,18 +207,17 @@ class Matmul(Gate):
             return left @ right
 
     def backpropagate(self, features, variable, gradient):
-        derivatives = {}
-
         # Take derivative of left side
         if variable is self.children[0]:
-            derivatives[self.children[0]] = gradient.T @ features[1][None]
+            print(features.shape)
+            print(gradient.shape)
+            print((features @ gradient.T).shape)
+            return features @ gradient.T
         elif variable in self.children[0].variables:
-            derivatives[self.children[0]] = gradient @ features[1]
+            return gradient @ features[1]
 
         # Take derivative of right side
         if variable is self.children[1]:
-            derivatives[self.children[1]] = gradient.T @ features[0][None]
+            return features @ gradient.T
         elif variable in self.children[1].variables:
-            derivatives[self.children[1]] = gradient @ features[0]
-
-        return derivatives
+            return gradient @ features[0]
