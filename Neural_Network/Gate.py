@@ -42,28 +42,27 @@ class Gate(object):
         self._cached_gradient_id = 0
         self._cached_gradient = None
 
-    # Forward pass
     @cache
     def __call__(self, stimulus):
-        # print(self.__class__.__name__ + " DOWN")
         return self.propagate([child(stimulus) for child in self.children])
 
     @cache
     def gradient(self, stimulus, variable, grad):
-        accumulator = []
+        features = [child(stimulus) for child in self.children]
 
+        # Holds derivatives for each branch of the function graph at the current node
+        branches = []
         for child in self.children:
             # Derivative is complete
             if variable is child:
-                accumulator.append(self.backpropagate(child(stimulus), child, grad))
+                branches.append(self.backpropagate(features, variable, grad))
 
             # Derivative needs to be further backpropagated
             elif variable in child.variables:
-                derivative = self.backpropagate(child(stimulus), child, grad)
-                accumulator.append(child.gradient(stimulus, variable, derivative))
+                derivative = self.backpropagate(features, variable, grad)
+                branches.append(child.gradient(stimulus, variable, derivative))
 
-        # Sum derivative over all branches
-        return np.sum(accumulator)
+        return sum(branches)
 
     # Define propagation in child classes
     def propagate(self, features):
@@ -128,7 +127,7 @@ class Variable(np.ndarray):
             raise ValueError("The gradient should not have been backpropagated here. Not optimal.")
             # return grad * 0
 
-        return grad  # @ np.eye(self.shape[0])
+        return grad  # @ np.eye(self.output_nodes)
 
     @property
     def output_nodes(self):
@@ -148,7 +147,8 @@ class Variable(np.ndarray):
     def __add__(self, other):
         return Add((self, other))
 
-    # In the network, variables are intrinsically only equivalent if they share the same reference
+    # Variables are, by design, only equivalent if they share the same reference
+    # If two different variables have all identical values, they are *still* not equal
     def __eq__(self, other):
         return self is other
 
@@ -209,15 +209,12 @@ class Matmul(Gate):
     def backpropagate(self, features, variable, gradient):
         # Take derivative of left side
         if variable is self.children[0]:
-            print(features.shape)
-            print(gradient.shape)
-            print((features @ gradient.T).shape)
-            return features @ gradient.T
+            return gradient @ features[1].T
         elif variable in self.children[0].variables:
             return gradient @ features[1]
 
         # Take derivative of right side
         if variable is self.children[1]:
-            return features @ gradient.T
+            return gradient @ features[0].T
         elif variable in self.children[1].variables:
-            return gradient @ features[0]
+            return features[0].T @ gradient
