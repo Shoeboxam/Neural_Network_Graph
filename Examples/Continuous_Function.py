@@ -3,6 +3,11 @@ from inspect import signature
 from Neural_Network import *
 
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+plt.style.use('fivethirtyeight')
+plot_points = []
 np.set_printoptions(suppress=True, linewidth=10000)
 
 
@@ -79,7 +84,9 @@ class Continuous(Environment):
             return self._size_expected
 
     def plot(self, plt, predict):
-        x, y = self.survey()
+        survey = self.survey()
+        x = survey['stimulus']
+        y = survey['expected']
 
         # Output of function is 1 dimensional
         if y.shape[0] == 1:
@@ -98,6 +105,10 @@ class Continuous(Environment):
             ax.scatter(x[0], predict[0], predict[1], color=(.9148, .604, .0945))
             ax.view_init(elev=10., azim=self.viewpoint)
             self.viewpoint += 5
+
+    @staticmethod
+    def error(expect, predict):
+        return np.linalg.norm(expect - predict)
 
 # environment = Continuous([lambda a, b: (24 * a**2 - 2 * b**2 + a),
 #                           lambda a, b: (12 * a ** 2 + 12 * b ** 3 + b)], domain=[[-1, 1]] * 2)
@@ -134,13 +145,35 @@ graph = Logistic(weight_2 @ hidden_1 + biases_2)
 loss = SumSquared(graph, codomain)
 variables = graph.variables
 
-# ~~~ Test the network ~~~
-sample = environment.sample()
-print("Gradient of weight_1")
-print(loss.gradient(sample, weight_1))
+# ~~~ Train the network ~~~
+step = .001
+i = 0
 
-print("Loss")
-print(loss(sample))
+while True:
+    i += 1
 
-print("Prediction")
-print(graph(sample))
+    sample = environment.sample()
+
+    for variable in graph.variables:
+        variable -= step * loss.gradient(sample, variable)
+
+    if i % 50 == 0:
+        survey = environment.survey()
+        prediction = graph(survey)
+
+        error = environment.error(survey['expected'], prediction)
+        plot_points.append((i, error))
+
+        # Error plot
+        plt.subplot(1, 2, 1)
+        plt.cla()
+        plt.title('Error')
+        plt.plot(*zip(*plot_points), marker='.', color=(.9148, .604, .0945))
+
+        # Environment plot
+        plt.subplot(1, 2, 2)
+        plt.cla()
+        plt.title('Environment')
+        environment.plot(plt, prediction)
+
+        plt.pause(0.00001)

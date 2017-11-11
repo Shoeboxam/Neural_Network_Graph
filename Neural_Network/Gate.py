@@ -39,14 +39,10 @@ class Gate(object):
         self._cached___call___id = 0
         self._cached___call__ = None
 
-        self._cached_gradient_id = 0
-        self._cached_gradient = None
-
     @cache
     def __call__(self, stimulus):
         return self.propagate([child(stimulus) for child in self.children])
 
-    @cache
     def gradient(self, stimulus, variable, grad):
         features = [child(stimulus) for child in self.children]
 
