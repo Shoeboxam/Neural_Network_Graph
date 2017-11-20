@@ -134,19 +134,22 @@ codomain = Source(environment, 'expected')
 # Layer one
 weight_1 = Variable(np.random.uniform(size=(4, domain.output_nodes)))
 biases_1 = Variable(np.random.uniform(size=(4, 1)))
-hidden_1 = Logistic(weight_1 @ domain + biases_1)
+hidden_1 = Bent(weight_1 @ domain + biases_1)
 
 # Layer two
 weight_2 = Variable(np.random.uniform(size=(2, hidden_1.output_nodes)))
 biases_2 = Variable(np.random.uniform(size=(2, 1)))
-graph = Logistic(weight_2 @ hidden_1 + biases_2)
+graph = Bent(weight_2 @ hidden_1 + biases_2)
 
 # Loss
 loss = SumSquared(graph, codomain)
 variables = graph.variables
 
 # ~~~ Train the network ~~~
-step = .001
+sample = environment.sample()
+print(graph(sample))
+
+step = .01
 i = 0
 
 while True:

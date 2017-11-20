@@ -9,6 +9,14 @@ class Logistic(Gate):
         return grad * self.propagate(features) * (1.0 - self.propagate(features))
 
 
+class Bent(Gate):
+    def propagate(self, features):
+        return (np.sqrt(np.vstack(features)**2 + 1) - 1) / 2 + np.vstack(features)
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * (np.vstack(features) / (2*np.sqrt(np.vstack(features)**2 + 1)) + 1)
+
+
 class Softmax(Gate):
     def propagate(self, features):
         unnormalized = np.exp(features - features.max())  # Max is used for numerical stability
