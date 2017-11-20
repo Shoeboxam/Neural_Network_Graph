@@ -122,6 +122,9 @@ class Gate(object):
     def __contains__(self, item):
         return item in self.variables
 
+    def __str__(self):
+        return self.__class__.__name__ + '(' + ','.join([str(child) for child in self.children]) + ')'
+
 
 class Variable(np.ndarray):
     """Datatype for differentiable variables"""
@@ -196,6 +199,9 @@ class Variable(np.ndarray):
     def __contains__(self, item):
         return item in self.variables
 
+    def __str__(self):
+        return '[' + 'x'.join([str(shape) for shape in self.shape]) + ']'
+
 
 # ~~~~~~~~~~~~~~~~~~~~~
 # Elementary operations
@@ -227,6 +233,9 @@ class Add(Gate):
     def backpropagate(self, features, variable, gradient):
         return gradient
 
+    def __str__(self):
+        return ' + '.join([str(child) for child in self.children])
+
     @property
     def output_nodes(self):
         return self.children[0].output_nodes
@@ -246,6 +255,9 @@ class Sub(Gate):
     def output_nodes(self):
         return self.children[0].output_nodes
 
+    def __str__(self):
+        return ' - '.join([str(child) for child in self.children])
+
 
 class Neg(Gate):
     def propagate(self, features):
@@ -253,6 +265,9 @@ class Neg(Gate):
 
     def backpropagate(self, features, variable, gradient):
         return -gradient
+
+    def __str__(self):
+        return ' -' + str(self.children[0])
 
 
 # Hadamard product
@@ -269,6 +284,9 @@ class Mul(Gate):
         if variable in self.children[1]:
             return features[0].T * gradient
 
+    def __str__(self):
+        return ' * '.join([str(child) for child in self.children])
+
 
 # Elementwise division, not inversion
 class Div(Gate):
@@ -284,6 +302,9 @@ class Div(Gate):
         if variable in self.children[1]:
             return np.divide(features[0].T, gradient)
 
+    def __str__(self):
+        return str(self.children[0]) + ' / ' + str(self.children[1])
+
 
 class Pow(Gate):
     def propagate(self, features):
@@ -297,6 +318,9 @@ class Pow(Gate):
         # Take derivative of exponent
         if variable in self.children[1]:
             return np.log(features[1]) * np.power(features[0], features[1])
+
+    def __str__(self):
+        return str(self.children[0]) + '**' + str(self.children[1])
 
 
 # Matrix product
@@ -327,3 +351,6 @@ class Matmul(Gate):
         # Take derivative of right side
         if variable in self.children[1]:
             return features[0].T @ gradient
+
+    def __str__(self):
+        return ' @ '.join([str(child) for child in self.children])

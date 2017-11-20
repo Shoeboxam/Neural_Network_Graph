@@ -145,6 +145,8 @@ graph = Bent(weight_2 @ hidden_1 + biases_2)
 loss = SumSquared(graph, codomain)
 variables = graph.variables
 
+print("Network Summary:")
+print(str(graph))
 # ~~~ Train the network ~~~
 step = .01
 i = 0

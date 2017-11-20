@@ -34,3 +34,6 @@ class Source(Gate):
         #   First:  0 - source; 1 - label
         #   Second: Input tag
         return 2
+
+    def __str__(self):
+        return self.tag
