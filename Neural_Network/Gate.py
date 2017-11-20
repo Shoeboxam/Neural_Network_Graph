@@ -98,6 +98,30 @@ class Gate(object):
     def __add__(self, other):
         return Add((self, other))
 
+    def __sub__(self, other):
+        return Sub((self, other))
+
+    def __pos__(self, other):
+        return self
+
+    def __neg__(self):
+        return Neg(self)
+
+    def __mul__(self, other):
+        return Mul((self, other))
+
+    def __truediv__(self, other):
+        return Div((self, other))
+
+    def __pow__(self, power, modulo=None):
+        return Pow((self, power))
+
+    def __iter__(self):
+        return iter(self.variables)
+
+    def __contains__(self, item):
+        return item in self.variables
+
 
 class Variable(np.ndarray):
     """Datatype for differentiable variables"""
@@ -143,37 +167,62 @@ class Variable(np.ndarray):
     def __add__(self, other):
         return Add((self, other))
 
+    def __sub__(self, other):
+        return Sub((self, other))
+
+    def __pos__(self, other):
+        return self
+
+    def __neg__(self):
+        return Neg(self)
+
+    def __mul__(self, other):
+        return Mul((self, other))
+
+    def __truediv__(self, other):
+        return Div((self, other))
+
+    def __pow__(self, power, modulo=None):
+        return Pow((self, power))
+
     # Variables are, by design, only equivalent if they share the same reference
     # If two different variables have all identical values, they are *still* not equal
     def __eq__(self, other):
         return self is other
+
+    def __iter__(self):
+        return iter(self.variables)
+
+    def __contains__(self, item):
+        return item in self.variables
 
 
 # ~~~~~~~~~~~~~~~~~~~~~
 # Elementary operations
 # ~~~~~~~~~~~~~~~~~~~~~
 
+def add_coerce(left, right):
+    if type(left) in _scalar or type(right) in _scalar:
+        return left + right
+
+    # Implicitly cast lesser operand to a higher conformable dimension
+    # Stimuli become vectorized, but bias units remain 1D. To add wx + b, must broadcast
+    elif left.ndim == 2 and right.ndim == 1:
+        return np.add(left, np.tile(right[..., np.newaxis], left.shape[1]))
+    elif left.ndim == 1 and right.ndim == 2:
+        return np.add(np.tile(left[..., np.newaxis], right.shape[1]), right)
+
+    elif left.ndim == 3 and right.ndim == 2:
+        return np.add(left, np.tile(right[..., np.newaxis], left.shape[2]))
+    elif left.ndim == 2 and right.ndim == 3:
+        return np.add(np.tile(left[..., np.newaxis], right.shape[2]), right)
+    else:
+        return left + right
+
+
 class Add(Gate):
     def propagate(self, features):
-        left = features[0]
-        right = features[1]
-
-        if type(left) in _scalar or type(right) in _scalar:
-            return left + right
-
-        # Implicitly cast lesser operand to a higher conformable dimension
-        # Stimuli become vectorized, but bias units remain 1D. To add wx + b, must broadcast
-        elif left.ndim == 2 and right.ndim == 1:
-            return np.add(left, np.tile(right[..., np.newaxis], left.shape[1]))
-        elif left.ndim == 1 and right.ndim == 2:
-            return np.add(np.tile(left[..., np.newaxis], right.shape[1]), right)
-
-        elif left.ndim == 3 and right.ndim == 2:
-            return np.add(left, np.tile(right[..., np.newaxis], left.shape[2]))
-        elif left.ndim == 2 and right.ndim == 3:
-            return np.add(np.tile(left[..., np.newaxis], right.shape[2]), right)
-        else:
-            return left + right
+        return add_coerce(features[0], features[1])
 
     def backpropagate(self, features, variable, gradient):
         return gradient
@@ -183,6 +232,74 @@ class Add(Gate):
         return self.children[0].output_nodes
 
 
+class Sub(Gate):
+    def propagate(self, features):
+        return add_coerce(features[0], -features[1])
+
+    def backpropagate(self, features, variable, gradient):
+        if variable in self.children[0]:
+            return gradient
+        else:
+            return -gradient
+
+    @property
+    def output_nodes(self):
+        return self.children[0].output_nodes
+
+
+class Neg(Gate):
+    def propagate(self, features):
+        return -np.vstack(features)
+
+    def backpropagate(self, features, variable, gradient):
+        return -gradient
+
+
+# Hadamard product
+class Mul(Gate):
+    def propagate(self, features):
+        return np.multiply(features[0], features[1])
+
+    def backpropagate(self, features, variable, gradient):
+        # Take derivative of left side
+        if variable in self.children[0]:
+            return gradient * features[1].T
+
+        # Take derivative of right side
+        if variable in self.children[1]:
+            return features[0].T * gradient
+
+
+# Elementwise division, not inversion
+class Div(Gate):
+    def propagate(self, features):
+        return np.divide(features[0], features[1])
+
+    def backpropagate(self, features, variable, gradient):
+        # Take derivative of left side
+        if variable in self.children[0]:
+            return np.divide(gradient, features[1].T)
+
+        # Take derivative of right side
+        if variable in self.children[1]:
+            return np.divide(features[0].T, gradient)
+
+
+class Pow(Gate):
+    def propagate(self, features):
+        return np.power(features[0], features[1])
+
+    def backpropagate(self, features, variable, gradient):
+        # Take derivative of base
+        if variable in self.children[0]:
+            return features[1] * np.power(features[0], features[1] - 1)
+
+        # Take derivative of exponent
+        if variable in self.children[1]:
+            return np.log(features[1]) * np.power(features[0], features[1])
+
+
+# Matrix product
 class Matmul(Gate):
     @property
     def output_nodes(self):
@@ -204,13 +321,9 @@ class Matmul(Gate):
 
     def backpropagate(self, features, variable, gradient):
         # Take derivative of left side
-        if variable is self.children[0]:
+        if variable in self.children[0]:
             return gradient @ features[1].T
-        elif variable in self.children[0].variables:
-            return gradient @ features[1]
 
         # Take derivative of right side
-        if variable is self.children[1]:
-            return gradient @ features[0].T
-        elif variable in self.children[1].variables:
+        if variable in self.children[1]:
             return features[0].T @ gradient

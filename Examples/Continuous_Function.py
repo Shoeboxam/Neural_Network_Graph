@@ -146,18 +146,14 @@ loss = SumSquared(graph, codomain)
 variables = graph.variables
 
 # ~~~ Train the network ~~~
-sample = environment.sample()
-print(graph(sample))
-
 step = .01
 i = 0
 
 while True:
     i += 1
-
     sample = environment.sample()
 
-    for variable in graph.variables:
+    for variable in graph:
         variable -= step * loss.gradient(sample, variable)
 
     if i % 50 == 0:
