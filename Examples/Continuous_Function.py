@@ -153,10 +153,10 @@ i = 0
 
 while True:
     i += 1
-    sample = environment.sample()
+    sample = environment.sample(quantity=20)
 
     for variable in graph:
-        variable -= step * loss.gradient(sample, variable)
+        variable -= step * np.average(loss.gradient(sample, variable), axis=2)
 
     if i % 50 == 0:
         survey = environment.survey()

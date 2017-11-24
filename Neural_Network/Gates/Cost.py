@@ -37,7 +37,7 @@ class SumSquared(Cost):
         return np.average((expectation - prediction)**2, axis=0)
 
     def backpropagate(self, prediction, expectation):
-        return -2 * (expectation - prediction)
+        return -2 * (expectation - prediction)[None, ...]
 
 
 class CrossEntropy(Cost):

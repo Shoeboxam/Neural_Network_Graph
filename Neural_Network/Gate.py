@@ -92,6 +92,10 @@ class Gate(object):
         [variables.extend(child.variables) for child in self.children]
         return variables
 
+    @property
+    def T(self):
+        return np.swapaxes(self, 0, 1)
+
     def __matmul__(self, other):
         return Matmul((self, other))
 
@@ -164,6 +168,10 @@ class Variable(np.ndarray):
     def variables(self):
         return [self]
 
+    @property
+    def T(self):
+        return np.swapaxes(self, 0, 1)
+
     def __matmul__(self, other):
         return Matmul((self, other))
 
@@ -231,6 +239,8 @@ class Add(Gate):
         return add_coerce(features[0], features[1])
 
     def backpropagate(self, features, variable, gradient):
+        if variable in self.children:
+            return np.swapaxes(gradient, 0, 1)
         return gradient
 
     def __str__(self):
@@ -329,10 +339,8 @@ class Matmul(Gate):
     def output_nodes(self):
         return self.children[0].output_nodes
 
-    def propagate(self, features):
-        left = features[0]
-        right = features[1]
-
+    @staticmethod
+    def matmul(left, right):
         if type(left) in _scalar or type(right) in _scalar:
             return left * right
 
@@ -343,14 +351,17 @@ class Matmul(Gate):
         else:
             return left @ right
 
+    def propagate(self, features):
+        return self.matmul(features[0], features[1])
+
     def backpropagate(self, features, variable, gradient):
         # Take derivative of left side
         if variable in self.children[0]:
-            return gradient @ features[1].T
+            return self.matmul(np.swapaxes(gradient, 0, 1), features[1][None, ...])
 
         # Take derivative of right side
         if variable in self.children[1]:
-            return features[0].T @ gradient
+            return self.matmul(gradient, features[0])
 
     def __str__(self):
         return ' @ '.join([str(child) for child in self.children])
