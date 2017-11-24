@@ -26,7 +26,7 @@ def store(method):
     return decorator
 
 
-class Gate(object):
+class Node(object):
     def __init__(self, children):
         if type(children) not in [list, tuple]:
             children = [children]
@@ -234,7 +234,7 @@ def add_coerce(left, right):
         return left + right
 
 
-class Add(Gate):
+class Add(Node):
     def propagate(self, features):
         return add_coerce(features[0], features[1])
 
@@ -251,7 +251,7 @@ class Add(Gate):
         return self.children[0].output_nodes
 
 
-class Sub(Gate):
+class Sub(Node):
     def propagate(self, features):
         return add_coerce(features[0], -features[1])
 
@@ -269,7 +269,7 @@ class Sub(Gate):
         return ' - '.join([str(child) for child in self.children])
 
 
-class Neg(Gate):
+class Neg(Node):
     def propagate(self, features):
         return -np.vstack(features)
 
@@ -281,7 +281,7 @@ class Neg(Gate):
 
 
 # Hadamard product
-class Mul(Gate):
+class Mul(Node):
     def propagate(self, features):
         return np.multiply(features[0], features[1])
 
@@ -299,7 +299,7 @@ class Mul(Gate):
 
 
 # Elementwise division, not inversion
-class Div(Gate):
+class Div(Node):
     def propagate(self, features):
         return np.divide(features[0], features[1])
 
@@ -316,7 +316,7 @@ class Div(Gate):
         return str(self.children[0]) + ' / ' + str(self.children[1])
 
 
-class Pow(Gate):
+class Pow(Node):
     def propagate(self, features):
         return np.power(features[0], features[1])
 
@@ -334,7 +334,7 @@ class Pow(Gate):
 
 
 # Matrix product
-class Matmul(Gate):
+class Matmul(Node):
     @property
     def output_nodes(self):
         return self.children[0].output_nodes

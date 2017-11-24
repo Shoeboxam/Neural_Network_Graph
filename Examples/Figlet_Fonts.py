@@ -151,7 +151,7 @@ loss = SumSquared(graph, codomain)
 print("Network Summary:")
 print(str(graph))
 # ~~~ Train the network ~~~
-step = .0001
+step = .00001
 i = 0
 
 while True:

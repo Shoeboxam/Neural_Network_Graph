@@ -1,4 +1,4 @@
-from .Gates import *
-from .Gate import Variable
+from .Nodes import *
+from .Node import Variable
 
 from .Environment import Environment

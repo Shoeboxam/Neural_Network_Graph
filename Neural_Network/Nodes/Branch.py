@@ -1,7 +1,7 @@
-from ..Gate import *
+from ..Node import *
 
 
-class Stack(Gate):
+class Stack(Node):
     def propagate(self, features):
         return np.vstack(features)
 
@@ -13,7 +13,7 @@ class Stack(Gate):
                 return child.gradient(stimulus, variable, grad)
 
 
-class Split(Gate):
+class Split(Node):
 
     def __init__(self, children, node_interval):
         super().__init__(children)

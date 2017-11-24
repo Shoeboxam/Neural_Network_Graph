@@ -1,8 +1,8 @@
-from Neural_Network.Gate import Gate
+from Neural_Network.Node import Node
 import numpy as np
 
 
-class GaussianNeighborhood(Gate):
+class GaussianNeighborhood(Node):
     def propagate(self, features):
         neighborhood = np.exp(-np.square(features))
         return neighborhood / np.sum(neighborhood)
@@ -12,7 +12,7 @@ class GaussianNeighborhood(Gate):
         return neighborhood / np.sum(neighborhood)
 
 
-class PairwiseEuclidean(Gate):
+class PairwiseEuclidean(Node):
     def propagate(self, sample_space):
         # Singleton axes are added to end to force broadcasting. [f, 1, b] - [f, b, 1] -> [f, b, b]
         delta = np.sqrt(np.sum(np.square(sample_space[..., None] - sample_space[..., None, :]), axis=0))
@@ -22,7 +22,7 @@ class PairwiseEuclidean(Gate):
         return -(sample_space[..., None] - sample_space[..., None, :])
 
 
-class PairwiseDot(Gate):
+class PairwiseDot(Node):
     def propagate(self, sample_space):
         return np.einsum('i...,i...->...', sample_space[..., None] - sample_space[..., None, :])
 

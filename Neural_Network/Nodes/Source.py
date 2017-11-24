@@ -1,11 +1,11 @@
-from ..Gate import *
+from ..Node import *
 import numpy as np
 
 # This is one source for the network.
 # Each source instance handles a single tag from the environment class.
 
 
-class Source(Gate):
+class Source(Node):
     def __init__(self, source, tag):
         super().__init__(children=[])
         self.source = source

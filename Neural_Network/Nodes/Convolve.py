@@ -1,9 +1,9 @@
-from ..Gate import *
+from ..Node import *
 
 import numpy as np
 
 
-class Convolve(Gate):
+class Convolve(Node):
     def __init__(self, children, kernel):
         super().__init__(children)
         self.kernel = kernel

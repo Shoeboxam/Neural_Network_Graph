@@ -1,9 +1,9 @@
-from ..Gate import *
+from ..Node import *
 import numpy as np
 
 
 # NOTE: The signatures of cost functions do not match the parent class
-class Cost(Gate):
+class Cost(Node):
     def __init__(self, predictions, expectations):
         # Set self.children
         super().__init__(predictions)

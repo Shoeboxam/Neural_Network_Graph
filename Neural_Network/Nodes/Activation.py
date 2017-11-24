@@ -1,7 +1,7 @@
-from ..Gate import *
+from ..Node import *
 
 
-class Logistic(Gate):
+class Logistic(Node):
     def propagate(self, features):
         return 1.0 / (1.0 + np.exp(-np.vstack(features)))
 
@@ -9,7 +9,7 @@ class Logistic(Gate):
         return grad * self.propagate(features) * (1.0 - self.propagate(features))
 
 
-class Bent(Gate):
+class Bent(Node):
     def propagate(self, features):
         return (np.sqrt(np.vstack(features)**2 + 1) - 1) / 2 + np.vstack(features)
 
@@ -17,7 +17,7 @@ class Bent(Gate):
         return gradient * (np.vstack(features) / (2*np.sqrt(np.vstack(features)**2 + 1)) + 1)
 
 
-class Softmax(Gate):
+class Softmax(Node):
     def propagate(self, features):
         unnormalized = np.exp(features - features.max())  # Max is used for numerical stability
         return unnormalized / np.sum(unnormalized)
