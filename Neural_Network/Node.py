@@ -1,4 +1,5 @@
 import numpy as np
+import abc
 
 _scalar = [str, int, float]
 
@@ -61,11 +62,13 @@ class Node(object):
         return sum(branches)
 
     # Define propagation in child classes
+    @abc.abstractmethod
     def propagate(self, features):
-        raise NotImplementedError("Gate is an abstract base class, and propagate is not defined.")
+        pass
 
+    @abc.abstractmethod
     def backpropagate(self, features, variable, gradient):
-        raise NotImplementedError("Gate is an abstract base class, and backpropagate is not defined.")
+        pass
 
     @property
     # @store

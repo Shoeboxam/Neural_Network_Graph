@@ -1,29 +1,23 @@
 # There is only one environment for the network.
 # The environment may produce many sources when sampled.
 
+import abc
+
 
 class Environment(object):
+    # return a random batch of samples from the environment (for training)
+    @abc.abstractmethod
+    def sample(self, quantity=None):
+        pass
 
-    def _tag(method):
-        def decorator(_self, quantity=None, tagged=True):
-            if tagged:
-                return dict(zip(_self.tags, method(_self, quantity)))
-            return method(_self, quantity)
-        return decorator
+    # return a deterministic batch of samples from the environment (for plotting)
+    @abc.abstractmethod
+    def survey(self, quantity=None):
+        pass
 
-    # These are the labels for each of the indices returned by the sample and survey methods
-    tags = ['stimulus', 'expected']
-
-    @_tag
-    def sample(self, quantity):
-        raise NotImplementedError("Environment is abstract.")
-
-    @_tag
-    def survey(self, quantity):
-        raise NotImplementedError("Environment is abstract.")
-
+    @abc.abstractmethod
     def output_nodes(self, tag):
-        raise NotImplementedError("Environment is abstract")
+        pass
 
     def plot(self, plt, predict):
         pass

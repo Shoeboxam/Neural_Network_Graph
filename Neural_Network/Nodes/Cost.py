@@ -25,11 +25,13 @@ class Cost(Node):
 
         return np.vstack([child.gradient(stimulus, variable, grad) for child in self.children])
 
+    @abc.abstractmethod
     def propagate(self, prediction, expectation):
-        raise NotImplementedError("Cost is an abstract base class, and propagate is not defined.")
+        pass
 
+    @abc.abstractmethod
     def backpropagate(self, prediction, expectation):
-        raise NotImplementedError("Cost is an abstract base class, and backpropagate is not defined.")
+        pass
 
 
 class SumSquared(Cost):
