@@ -1,12 +1,8 @@
 import pyfiglet
-import matplotlib.pyplot as plt
 
 from Neural_Network import *
+from Environments.Environment import Environment
 
-
-np.set_printoptions(suppress=True, linewidth=10000)
-plt.style.use('fivethirtyeight')
-plot_points = []
 
 # Autoencoder for font denoising!
 
@@ -123,59 +119,3 @@ class FigletFonts(Environment):
         for line in ascii_valued:
             output += ''.join([chr(int(round(symbol))) for symbol in line]) + '\n'
         return output
-
-
-ascii_vals = [i for i in range(33, 126)]
-environment = FigletFonts('banner3', noise=0.0, autoencoder=True, ascii_vals=ascii_vals)
-
-
-# ~~~ Create the network ~~~
-domain = Source(environment, 'stimulus')
-codomain = Source(environment, 'expected')
-
-# Layer one
-weight_1 = Variable(np.random.normal(size=(100, domain.output_nodes)))
-biases_1 = Variable(np.random.normal(size=(100, 1)))
-hidden_1 = Bent(weight_1 @ domain + biases_1)
-
-# Layer two
-weight_2 = Variable(np.random.normal(size=(environment.output_nodes(), hidden_1.output_nodes)))
-biases_2 = Variable(np.random.normal(size=(environment.output_nodes(), 1)))
-graph = Logistic(weight_2 @ hidden_1 + biases_2)
-
-# Loss
-loss = SumSquared(graph, codomain)
-
-print("Network Summary:")
-print(str(graph))
-# ~~~ Train the network ~~~
-step = .00001
-i = 0
-
-while True:
-    i += 1
-    sample = environment.sample(quantity=10)
-
-    for variable in graph:
-        variable -= step * np.average(loss.gradient(sample, variable), axis=2)
-
-    if i % 200 == 0:
-        survey = environment.survey(quantity=1)
-        prediction = graph(survey)
-
-        error = environment.error(survey['expected'], prediction)
-        plot_points.append((i, error))
-
-        # Error plot
-        plt.subplot(1, 2, 1)
-        plt.cla()
-        plt.title('Error')
-        plt.plot(*zip(*plot_points), marker='.', color=(.9148, .604, .0945))
-
-        # Environment plot
-        plt.subplot(1, 2, 2)
-        plt.cla()
-        plt.title('Environment')
-        environment.plot(plt, prediction)
-
-        plt.pause(0.00001)

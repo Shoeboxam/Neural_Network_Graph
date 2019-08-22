@@ -27,6 +27,11 @@ def store(method):
     return decorator
 
 
+# a value may be a constant, or may be a network component
+def is_network(value):
+    return issubclass(type(value), Node) or issubclass(type(value), Variable)
+
+
 class Node(object):
     def __init__(self, children):
         if type(children) not in [list, tuple]:
@@ -42,7 +47,7 @@ class Node(object):
 
     @cache
     def __call__(self, stimulus):
-        return self.propagate([child(stimulus) for child in self.children])
+        return self.propagate([child(stimulus) if is_network(child) else child for child in self.children])
 
     def gradient(self, stimulus, variable, grad):
         features = [child(stimulus) for child in self.children]
@@ -91,9 +96,8 @@ class Node(object):
     # @store
     def variables(self):
         """List the input variables"""
-        variables = []
-        [variables.extend(child.variables) for child in self.children]
-        return variables
+        return [variable for child in self.children if is_network(child)
+                for variable in child.variables]
 
     @property
     def T(self):

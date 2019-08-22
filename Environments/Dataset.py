@@ -1,5 +1,5 @@
-import pandas
 from Neural_Network import *
+from Environments.Environment import Environment
 
 
 class Dataset(Environment):
@@ -53,30 +53,3 @@ class Dataset(Environment):
     @staticmethod
     def error(expect, predict):
         return np.linalg.norm(expect - predict)
-
-
-dataframe = pandas.read_csv('/home/shoe/Desktop/MaPUMS5full.csv')
-
-environment = Dataset(
-    stimulus=dataframe[['educ']].to_numpy(),
-    expected=dataframe[['married']].to_numpy())
-
-domain = Source(environment, 'stimulus')
-codomain = Source(environment, 'expected')
-
-# Layer one
-weight_1 = Variable(np.random.uniform(size=(4, domain.output_nodes)))
-biases_1 = Variable(np.random.uniform(size=(4, 1)))
-hidden_1 = Bent(weight_1 @ domain + biases_1)
-
-# Layer two
-weight_2 = Variable(np.random.uniform(size=(2, hidden_1.output_nodes)))
-biases_2 = Variable(np.random.uniform(size=(2, 1)))
-graph = Bent(weight_2 @ hidden_1 + biases_2)
-
-# Loss
-loss = SumSquared(graph, codomain)
-variables = graph.variables
-
-print(loss)
-

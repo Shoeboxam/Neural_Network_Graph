@@ -1,6 +1,14 @@
 from ..Node import *
 
 
+class Sinusoidal(Node):
+    def propagate(self, features):
+        return np.sin(features)
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient @ np.cos(features)
+
+
 class Logistic(Node):
     def propagate(self, features):
         return 1.0 / (1.0 + np.exp(-np.vstack(features)))
