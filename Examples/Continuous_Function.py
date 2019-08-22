@@ -32,10 +32,8 @@ class Continuous(Environment):
 
         self.viewpoint = np.random.randint(0, 360)
 
-    @Environment._tag
-    def sample(self, quantity):
-        if quantity is None:
-            quantity = 1
+    def sample(self, quantity=None):
+        quantity = quantity or 1
 
         # Generate random values for each input stimulus
         axes = []
@@ -53,12 +51,10 @@ class Continuous(Environment):
         for idx, f in enumerate(self._funct):
             expectation.append(f(*stimulus))
 
-        return [np.array(stimulus), np.array(expectation)]
+        return {'stimulus': np.array(stimulus), 'expected': np.array(expectation)}
 
-    @Environment._tag
-    def survey(self, quantity):
-        if quantity is None:
-            quantity = 128
+    def survey(self, quantity=None):
+        quantity = quantity or 128
 
         # Quantity is adjusted to the closest meshgrid approximation
         axis_length = int(round(quantity ** self._size_stimulus ** -1))
@@ -74,7 +70,7 @@ class Continuous(Environment):
         for idx, f in enumerate(self._funct):
             expectation.append(f(*stimulus))
 
-        return [np.array(stimulus), np.array(expectation)]
+        return {'stimulus': np.array(stimulus), 'expected': np.array(expectation)}
 
     def output_nodes(self, tag):
         if tag is 'stimulus':

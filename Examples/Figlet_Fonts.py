@@ -64,7 +64,6 @@ class FigletFonts(Environment):
         self.stimuli = np.array(self.stimuli)
         self.expected = np.eye(len(ascii_vals))
 
-    @Environment._tag
     def sample(self, quantity=1):
         x = np.random.randint(len(self.ascii_vals), size=quantity)
 
@@ -75,9 +74,8 @@ class FigletFonts(Environment):
         else:
             stimuli = self.stimuli[x]
 
-        return [stimuli.T, self.stimuli[x].T]
+        return {'stimulus': stimuli.T, 'expected': self.stimuli[x].T}
 
-    @Environment._tag
     def survey(self, quantity=None):
         if not quantity:
             quantity = len(self.ascii_vals)
@@ -94,7 +92,7 @@ class FigletFonts(Environment):
         print("Trial:")
         print(self.reformat(stimuli))
 
-        return [stimuli[None].T, self.stimuli[x][None].T]
+        return {'stimulus': stimuli[None].T, 'expected': self.stimuli[x][None].T}
 
     def output_nodes(self, tag=None):
         return np.size(self.stimuli[0])

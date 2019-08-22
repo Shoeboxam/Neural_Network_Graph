@@ -35,13 +35,11 @@ class ImageSingle(Environment):
     def __init__(self, path):
         self.data = np.array(Image.open(path)).astype(float)
 
-    @Environment._tag
-    def sample(self, quantity):
-        return [self.data, np.array(1)]
+    def sample(self, quantity=None):
+        return {'stimulus': self.data, 'expected': np.array(1)}
 
-    @Environment._tag
-    def survey(self, quantity):
-        return [self.data, np.array(1)]
+    def survey(self, quantity=None):
+        return {'stimulus': self.data, 'expected': np.array(1)}
 
     def output_nodes(self, tag):
         if tag is 'stimulus':
@@ -50,6 +48,7 @@ class ImageSingle(Environment):
 
     def plot(self, plt, predict):
         plt.imshow(predict)
+
 
 # Define environment
 image = ImageSingle(image_path)
@@ -61,7 +60,7 @@ source = Source(image, 'stimulus')
 convolution = Convolve(source, gaussian)
 
 # Call network with a sample image
-convolved = convolution(image.sample(tagged=True))
+convolved = convolution(image.sample())
 
 # Convert output back into image
 Image.fromarray(np.clip(convolved, 0, 255).astype(np.uint8)).show()
