@@ -4,6 +4,66 @@ from ..Node import *
 # A @ diag(b) == A * b.T
 
 
+class Identity(Node):
+    def propagate(self, features):
+        return np.vstack(features)
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient
+
+
+class Heaviside(Node):
+    def propagate(self, features):
+        return piecewise(np.vstack(features), 0, 1)
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * 0
+
+
+class ReLu(Node):
+    def __init__(self, children, alpha=0):
+        self.alpha = alpha
+        super().__init__(children=children)
+
+    def propagate(self, features):
+        features = np.vstack(features)
+        return piecewise(features, self.alpha * features, features)
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * np.swapaxes(piecewise(np.vstack(features), self.alpha, 1), -1, -2)
+
+
+class Exponent(Node):
+    def __init__(self, children, alpha=0):
+        self.alpha = alpha
+        super().__init__(children=children)
+
+    def propagate(self, features):
+        features = np.vstack(features)
+        return piecewise(features, self.alpha*(np.exp(features) - 1), features)
+
+    def backpropagate(self, features, variable, gradient):
+        features = np.vstack(features)
+        return gradient * np.swapaxes(piecewise(features, self.alpha * np.exp(features), 1), -1, -2)
+
+
+class Softplus(Node):
+    def propagate(self, features):
+        return np.log(1 + np.exp(np.vstack(features)))
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * np.swapaxes((1 + np.exp(-np.vstack(features)))**-1, -1, -2)
+
+
+class Gaussian(Node):
+    def propagate(self, features):
+        return np.exp(-np.vstack(features)**2)
+
+    def backpropagate(self, features, variable, gradient):
+        features = np.vstack(features)
+        return gradient * np.swapaxes(-2 * features * np.exp(-features**2), -1, -2)
+
+
 class Sinusoidal(Node):
     def propagate(self, features):
         return np.sin(np.vstack(features))
@@ -31,6 +91,41 @@ class Bent(Node):
         return gradient * np.swapaxes(diag, -1, -2)
 
 
+class Tanh(Node):
+    def propagate(self, features):
+        return np.tanh(np.vstack(features))
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * np.swapaxes(1 - self.propagate(features)**2, -1, -2)
+
+
+class ArcTan(Node):
+    def propagate(self, features):
+        return np.arctan(np.vstack(features))
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * np.swapaxes(1 / (np.vstack(features)**2 + 1))
+
+
+class SoftSign(Node):
+    def propagate(self, features):
+        features = np.vstack(features)
+        return features / (1 + np.abs(features))
+
+    def backpropagate(self, features, variable, gradient):
+        return gradient * np.swapaxes(1 / (1 + np.abs(np.vstack(features)))**2, -1, -2)
+
+
+class Log(Node):
+    def propagate(self, features):
+        features = np.vstack(features)
+        return piecewise(features, np.log(1 + features), -np.log(1 - features))
+
+    def backpropagate(self, features, variable, gradient):
+        features = np.vstack(features)
+        return gradient * np.swapaxes(piecewise(features, 1 / (1 + features), 1 / (1 - features), -1, -2))
+
+
 class Softmax(Node):
     def propagate(self, features):
         features = np.vstack(features)
@@ -48,3 +143,19 @@ def diag_3d(arr):
     # assign arr to a writable view of the interior diagonal along the final axes
     np.einsum('...ii->...i', zeros)[...] = arr
     return zeros
+
+
+def piecewise(x, lower, upper, thresh=0):
+
+    low_indices = np.where(x < thresh)
+    if type(lower) == float or type(lower) == int:
+        x[low_indices] = lower
+    else:
+        x[low_indices] = lower[low_indices]
+
+    up_indices = np.where(x > thresh)
+    if type(upper) == float or type(upper) == int:
+        x[up_indices] = upper
+    else:
+        x[up_indices] = upper[up_indices]
+    return x
