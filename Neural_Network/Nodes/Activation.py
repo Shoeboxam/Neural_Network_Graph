@@ -1,12 +1,17 @@
 from ..Node import *
 
+# using hadamard identity on elementwise functions for efficiency
+# A @ diag(b) == A * b.T
+
 
 class Sinusoidal(Node):
     def propagate(self, features):
-        return np.sin(features)
+        return np.sin(np.vstack(features))
 
     def backpropagate(self, features, variable, gradient):
-        return gradient @ np.cos(features)
+        print(gradient.shape)
+        print(np.vstack(features).shape)
+        return gradient * np.swapaxes(np.cos(np.vstack(features)), -1, -2)
 
 
 class Logistic(Node):
@@ -14,7 +19,9 @@ class Logistic(Node):
         return 1.0 / (1.0 + np.exp(-np.vstack(features)))
 
     def backpropagate(self, features, variable, grad):
-        return grad * self.propagate(features) * (1.0 - self.propagate(features))
+        forward = self.propagate(features)
+        # d propagate(r) / d r = diag(propagate(r) * (1 - propagate(r)))
+        return grad * np.swapaxes(forward * (1.0 - forward), -1, -2)
 
 
 class Bent(Node):
@@ -22,7 +29,8 @@ class Bent(Node):
         return (np.sqrt(np.vstack(features)**2 + 1) - 1) / 2 + np.vstack(features)
 
     def backpropagate(self, features, variable, gradient):
-        return gradient * (np.vstack(features) / (2*np.sqrt(np.vstack(features)**2 + 1)) + 1)
+        diag = (np.vstack(features) / (2*np.sqrt(np.vstack(features)**2 + 1)) + 1)
+        return gradient * np.swapaxes(diag, -1, -2)
 
 
 class Softmax(Node):

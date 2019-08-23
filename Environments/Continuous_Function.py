@@ -46,7 +46,11 @@ class Continuous(Environment):
         for idx, f in enumerate(self._funct):
             expectation.append(f(*stimulus))
 
-        return {'stimulus': np.array(stimulus), 'expected': np.array(expectation)}
+        # move batch to the first index, add trailing singleton axis to make column vector
+        stimulus = np.moveaxis(stimulus, -1, 0)[:, :, None]
+        expectation = np.moveaxis(np.array(expectation), -1, 0)[:, :, None]
+
+        return {'stimulus': stimulus, 'expected': expectation}
 
     def survey(self, quantity=None):
         quantity = quantity or 128
@@ -65,7 +69,11 @@ class Continuous(Environment):
         for idx, f in enumerate(self._funct):
             expectation.append(f(*stimulus))
 
-        return {'stimulus': np.array(stimulus), 'expected': np.array(expectation)}
+        # move batch to the first index, add trailing singleton axis to make column vector
+        stimulus = np.moveaxis(stimulus, -1, 0)[:, :, None]
+        expectation = np.moveaxis(np.array(expectation), -1, 0)[:, :, None]
+
+        return {'stimulus': stimulus, 'expected': expectation}
 
     def output_nodes(self, tag):
         if tag is 'stimulus':
@@ -79,21 +87,24 @@ class Continuous(Environment):
         x = survey['stimulus']
         y = survey['expected']
 
+        print(x.shape)
+        print(y.shape)
+
         # Output of function is 1 dimensional
-        if y.shape[0] == 1:
+        if y.shape[1] == 1:
             ax = plt.subplot(1, 2, 2)
             plt.ylim(self._range[0])
 
-            ax.plot(x[0], y[0], marker='.', color=(0.3559, 0.7196, 0.8637))
-            ax.plot(x[0], predict[0], marker='.', color=(.9148, .604, .0945))
+            ax.plot(x[:, 0], y[:, 0], marker='.', color=(0.3559, 0.7196, 0.8637))
+            ax.plot(x[:, 0], predict[:, 0], marker='.', color=(.9148, .604, .0945))
 
         # Output of function has arbitrary dimensions
-        if y.shape[0] > 1:
+        if y.shape[1] > 1:
 
             ax = plt.subplot(1, 2, 2, projection='3d')
             plt.title('Environment')
-            ax.scatter(x[0], y[0], y[1], color=(0.3559, 0.7196, 0.8637))
-            ax.scatter(x[0], predict[0], predict[1], color=(.9148, .604, .0945))
+            ax.scatter(x[:, 0], y[:, 0], y[:, 1], color=(0.3559, 0.7196, 0.8637))
+            ax.scatter(x[:, 0], predict[:, 0], predict[:, 1], color=(.9148, .604, .0945))
             ax.view_init(elev=10., azim=self.viewpoint)
             self.viewpoint += 5
 

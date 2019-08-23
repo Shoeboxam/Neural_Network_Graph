@@ -52,13 +52,13 @@ def test_continuous_sideways_saddle(plot=False):
     codomain = Source(environment, 'expected')
 
     # Layer one
-    weight_1 = Variable(np.random.uniform(size=(10, domain.output_nodes)))
-    biases_1 = Variable(np.random.uniform(size=(10, 1)))
+    weight_1 = Variable(np.random.uniform(size=(10, domain.output_nodes)), label='weight_1')
+    biases_1 = Variable(np.random.uniform(size=(10, 1)), label='bias_1')
     hidden_1 = Logistic(weight_1 @ domain + biases_1)
 
     # Layer two
-    weight_2 = Variable(np.random.uniform(size=(2, hidden_1.output_nodes)))
-    biases_2 = Variable(np.random.uniform(size=(2, 1)))
+    weight_2 = Variable(np.random.uniform(size=(2, hidden_1.output_nodes)), label='weight_2')
+    biases_2 = Variable(np.random.uniform(size=(2, 1)), label='bias_2')
     graph = Logistic(weight_2 @ hidden_1 + biases_2)
 
     # Loss
@@ -96,4 +96,5 @@ def test_continuous_periodic(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    train_utility(environment, loss, graph, plot=plot)
+    error = train_utility(environment, loss, graph, plot=plot, iterations=1000)
+    assert error < 1

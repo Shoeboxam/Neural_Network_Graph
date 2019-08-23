@@ -144,11 +144,12 @@ class Variable(np.ndarray):
     # Enforces mutability for all numerics
     # Provides seeds for recursive calls in the graph network
 
-    def __new__(cls, a):
-        obj = np.array(a).view(cls)
+    def __new__(cls, arr, label=None):
+        obj = np.array(arr).view(cls)
         return obj
 
-    def __init__(self, arr, **kwargs):
+    def __init__(self, arr, label=None, **kwargs):
+        self.label = label
         super().__init__(**kwargs)
 
     def __call__(self, stimulus):
@@ -222,32 +223,13 @@ class Variable(np.ndarray):
 # Elementary operations
 # ~~~~~~~~~~~~~~~~~~~~~
 
-def add_coerce(left, right):
-    if type(left) in _scalar or type(right) in _scalar:
-        return left + right
-
-    # Implicitly cast lesser operand to a higher conformable dimension
-    # Stimuli become vectorized, but bias units remain 1D. To add wx + b, must broadcast
-    elif left.ndim == 2 and right.ndim == 1:
-        return np.add(left, np.tile(right[..., np.newaxis], left.shape[1]))
-    elif left.ndim == 1 and right.ndim == 2:
-        return np.add(np.tile(left[..., np.newaxis], right.shape[1]), right)
-
-    elif left.ndim == 3 and right.ndim == 2:
-        return np.add(left, np.tile(right[..., np.newaxis], left.shape[2]))
-    elif left.ndim == 2 and right.ndim == 3:
-        return np.add(np.tile(left[..., np.newaxis], right.shape[2]), right)
-    else:
-        return left + right
-
-
 class Add(Node):
     def propagate(self, features):
-        return add_coerce(features[0], features[1])
+        return features[0] + features[1]
 
     def backpropagate(self, features, variable, gradient):
         if variable in self.children:
-            return np.swapaxes(gradient, 0, 1)
+            return np.swapaxes(gradient, -1, -2)
         return gradient
 
     def __str__(self):
@@ -260,7 +242,7 @@ class Add(Node):
 
 class Sub(Node):
     def propagate(self, features):
-        return add_coerce(features[0], -features[1])
+        return features[0] - features[1]
 
     def backpropagate(self, features, variable, gradient):
         if variable in self.children[0]:
@@ -346,29 +328,49 @@ class Matmul(Node):
     def output_nodes(self):
         return self.children[0].output_nodes
 
-    @staticmethod
-    def matmul(left, right):
-        if type(left) in _scalar or type(right) in _scalar:
-            return left * right
-
-        # Implicitly broadcast and vectorize matrix multiplication along axis 3
-        # Matrix multiplication between 3D arrays is the matrix multiplication between respective matrix slices
-        if left.ndim > 2 or right.ndim > 2:
-            return np.einsum('ij...,jl...->il...', left, right)
-        else:
-            return left @ right
+    # Matrix multiplication between N-dim arrays is the matrix multiplication across the tail axes
+    # contraction occurs along:
+    # left: last index
+    # right: if 1D, then along only index. Else along second to last index
 
     def propagate(self, features):
-        return self.matmul(features[0], features[1])
+        return features[0] @ features[1]
 
     def backpropagate(self, features, variable, gradient):
+
+        print(self.children)
+        print('backprop matmul')
+        print(gradient.shape)
+        print([feature.shape for feature in features])
+        if variable in self.children:
+            print('kron substitution')
+            print(np.swapaxes(gradient, -1, -2).shape)
+            print([feature.shape for i, feature in
+                   enumerate(features) if variable is not self.children[i]])
+        else:
+            print('standard backprop')
+            print(gradient.shape)
+            print([np.swapaxes(feature, -1, -2).shape for i, feature in
+                   enumerate(features) if variable is not self.children[i]])
+
+        # apply identity to bypass kronecker
+        if variable is self.children[0]:
+            return np.swapaxes(gradient, -1, -2) @ np.swapaxes(features[1], -1, -2)
+
+        # TODO: s @ W not tested
+        if variable is self.children[1]:
+            return np.swapaxes(gradient, -1, -2) @ features[0]
+
         # Take derivative of left side
-        if variable in self.children[0]:
-            return self.matmul(np.swapaxes(gradient, 0, 1), features[1][None, ...])
+        if variable in self.children[0].variables:
+            print('left')
+            return gradient @ np.swapaxes(features[1], -1, -2)
 
         # Take derivative of right side
-        if variable in self.children[1]:
-            return self.matmul(gradient, features[0])
+        if variable in self.children[1].variables:
+            print('right')
+            print((gradient @ features[0]).shape)
+            return gradient @ features[0]
 
     def __str__(self):
         return ' @ '.join([str(child) for child in self.children])

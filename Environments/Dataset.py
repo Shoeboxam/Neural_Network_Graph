@@ -33,20 +33,20 @@ class Dataset(Environment):
         y = survey[1]
 
         # Output of function is 1 dimensional
-        if y.shape[0] == 1:
+        if y.shape[1] == 1:
             ax = plt.subplot(1, 2, 2)
             plt.ylim(self._range[0])
 
-            ax.plot(x[0], y[0], marker='.', color=(0.3559, 0.7196, 0.8637))
-            ax.plot(x[0], predict[0], marker='.', color=(.9148, .604, .0945))
+            ax.plot(x[:, 0], y[:, 0], marker='.', color=(0.3559, 0.7196, 0.8637))
+            ax.plot(x[:, 0], predict[:, 0], marker='.', color=(.9148, .604, .0945))
 
         # Output of function has arbitrary dimensions
-        if y.shape[0] > 1:
+        if y.shape[1] > 1:
 
             ax = plt.subplot(1, 2, 2, projection='3d')
             plt.title('Environment')
-            ax.scatter(x[0], y[0], y[1], color=(0.3559, 0.7196, 0.8637))
-            ax.scatter(x[0], predict[0], predict[1], color=(.9148, .604, .0945))
+            ax.scatter(x[:, 0], y[:, 0], y[:, 1], color=(0.3559, 0.7196, 0.8637))
+            ax.scatter(x[:, 0], predict[:, 0], predict[:, 1], color=(.9148, .604, .0945))
             ax.view_init(elev=10., azim=self.viewpoint)
             self.viewpoint += 5
 
