@@ -338,20 +338,20 @@ class Matmul(Node):
 
     def backpropagate(self, features, variable, gradient):
 
-        print(self.children)
-        print('backprop matmul')
-        print(gradient.shape)
-        print([feature.shape for feature in features])
-        if variable in self.children:
-            print('kron substitution')
-            print(np.swapaxes(gradient, -1, -2).shape)
-            print([feature.shape for i, feature in
-                   enumerate(features) if variable is not self.children[i]])
-        else:
-            print('standard backprop')
-            print(gradient.shape)
-            print([np.swapaxes(feature, -1, -2).shape for i, feature in
-                   enumerate(features) if variable is not self.children[i]])
+        # print(self.children)
+        # print('backprop matmul')
+        # print(gradient.shape)
+        # print([feature.shape for feature in features])
+        # if variable in self.children:
+        #     print('kron substitution')
+        #     print(np.swapaxes(gradient, -1, -2).shape)
+        #     print([feature.shape for i, feature in
+        #            enumerate(features) if variable is not self.children[i]])
+        # else:
+        #     print('standard backprop')
+        #     print(gradient.shape)
+        #     print([np.swapaxes(feature, -1, -2).shape for i, feature in
+        #            enumerate(features) if variable is not self.children[i]])
 
         # apply identity to bypass kronecker
         if variable is self.children[0]:
@@ -363,13 +363,10 @@ class Matmul(Node):
 
         # Take derivative of left side
         if variable in self.children[0].variables:
-            print('left')
             return gradient @ np.swapaxes(features[1], -1, -2)
 
         # Take derivative of right side
         if variable in self.children[1].variables:
-            print('right')
-            print((gradient @ features[0]).shape)
             return gradient @ features[0]
 
     def __str__(self):

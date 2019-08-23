@@ -7,6 +7,7 @@ from Tests.utils import train_utility
 
 def test_pums(plot=False):
     dataframe = pandas.read_csv('/home/shoe/Desktop/MaPUMS5full.csv')
+
     environment = Dataset(
         stimulus=dataframe[['educ']].to_numpy(),
         expected=dataframe[['married']].to_numpy())
@@ -14,10 +15,11 @@ def test_pums(plot=False):
     # data sources
     stimulus = Source(environment, 'stimulus')
     expected = Source(environment, 'expected')
+    # (only two classes for y, so encoding not necessary)
 
     # Layer one
-    weight_1 = Variable(np.random.uniform(size=(4, stimulus.output_nodes)))
-    biases_1 = Variable(np.random.uniform(size=(4, 1)))
+    weight_1 = Variable(np.random.uniform(size=(1, stimulus.output_nodes)))
+    biases_1 = Variable(np.random.uniform(size=(1, 1)))
     graph = Softmax(weight_1 @ stimulus + biases_1)
 
     # Loss

@@ -9,8 +9,6 @@ class Sinusoidal(Node):
         return np.sin(np.vstack(features))
 
     def backpropagate(self, features, variable, gradient):
-        print(gradient.shape)
-        print(np.vstack(features).shape)
         return gradient * np.swapaxes(np.cos(np.vstack(features)), -1, -2)
 
 
@@ -35,18 +33,18 @@ class Bent(Node):
 
 class Softmax(Node):
     def propagate(self, features):
-        unnormalized = np.exp(features - features.max())  # Max is used for numerical stability
+        features = np.vstack(features)
+        unnormalized = np.exp(features - features.max(axis=0))  # Max is used for numerical stability
         return unnormalized / np.sum(unnormalized)
 
     def backpropagate(self, features, variable, grad):
-        return grad @ (diag_3d(self.propagate(features)) - features @ features.T)
+        features = np.vstack(features)
+        return grad @ (diag_3d(self.propagate(features)) - features @ np.swapaxes(features, -1, -2))
 
 
-def diag_3d(self):
-    if self.ndim == 1:
-        return np.diag(self)
-    else:
-        elements = []
-        for idx in range(self.shape[-1]):
-            elements.append(self[..., idx].diag())
-        return np.stack(elements, self.ndim)
+def diag_3d(arr):
+    # construct an n+1 dimensional empty matrix
+    zeros = np.zeros((*arr.shape, arr.shape[-1]), arr.dtype)
+    # assign arr to a writable view of the interior diagonal along the final axes
+    np.einsum('...ii->...i', zeros)[...] = arr
+    return zeros

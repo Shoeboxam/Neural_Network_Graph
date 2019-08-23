@@ -47,8 +47,8 @@ class Continuous(Environment):
             expectation.append(f(*stimulus))
 
         # move batch to the first index, add trailing singleton axis to make column vector
-        stimulus = np.moveaxis(stimulus, -1, 0)[:, :, None]
-        expectation = np.moveaxis(np.array(expectation), -1, 0)[:, :, None]
+        stimulus = np.atleast_3d(np.moveaxis(stimulus, -1, 0))
+        expectation = np.atleast_3d(np.moveaxis(np.array(expectation), -1, 0))
 
         return {'stimulus': stimulus, 'expected': expectation}
 
@@ -70,8 +70,8 @@ class Continuous(Environment):
             expectation.append(f(*stimulus))
 
         # move batch to the first index, add trailing singleton axis to make column vector
-        stimulus = np.moveaxis(stimulus, -1, 0)[:, :, None]
-        expectation = np.moveaxis(np.array(expectation), -1, 0)[:, :, None]
+        stimulus = np.atleast_3d(np.moveaxis(stimulus, -1, 0))
+        expectation = np.atleast_3d(np.moveaxis(np.array(expectation), -1, 0))
 
         return {'stimulus': stimulus, 'expected': expectation}
 
@@ -86,9 +86,6 @@ class Continuous(Environment):
         survey = self.survey()
         x = survey['stimulus']
         y = survey['expected']
-
-        print(x.shape)
-        print(y.shape)
 
         # Output of function is 1 dimensional
         if y.shape[1] == 1:

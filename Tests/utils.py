@@ -20,20 +20,18 @@ def train_utility(environment, loss, graph, plot=False, iterations=None):
         sample = environment.sample(quantity=20)
 
         for variable in graph:
-            print('VARIABLE STEP:')
-            print(variable.label)
+            # print('VARIABLE STEP:')
+            # print(variable.label)
             grad = loss.gradient(sample, variable)
 
-            print('final shapes:')
-            print(grad.shape)
-            print(variable.shape)
-            print(i)
+            # print('final shapes:')
+            # print(grad.shape)
+            # print(variable.shape)
+            # print(i)
             variable -= step * np.average(grad, axis=0)
 
         if i % 50 == 0:
             survey = environment.survey()
-            print('forward:')
-            print({identifier: survey[identifier].shape for identifier in survey})
             prediction = graph(survey)
 
             error = environment.error(survey['expected'], prediction)

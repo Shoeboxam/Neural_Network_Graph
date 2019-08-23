@@ -17,28 +17,26 @@ class Dataset(Environment):
     def sample(self, quantity=None):
         quantity = quantity or 1
         indices = np.random.randint(0, self._number_rows, size=quantity)
-        return {tag: self._dataframes[tag][indices] for tag in self._dataframes}
+        return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
 
     def survey(self, quantity=None):
         quantity = min(quantity or 128, self._number_rows)
-        indices = np.floor(np.linspace(0, self._number_rows, quantity))
-        return {tag: self._dataframes[tag][indices] for tag in self._dataframes}
+        indices = np.linspace(0, self._number_rows, quantity).astype(np.uint8)
+        return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
 
     def output_nodes(self, tag):
         return self._dataframes[tag].shape[1]
 
     def plot(self, plt, predict):
         survey = self.survey()
-        x = survey[0]
-        y = survey[1]
+        x, *_, y = list(survey.values())
 
         # Output of function is 1 dimensional
         if y.shape[1] == 1:
             ax = plt.subplot(1, 2, 2)
-            plt.ylim(self._range[0])
 
-            ax.plot(x[:, 0], y[:, 0], marker='.', color=(0.3559, 0.7196, 0.8637))
-            ax.plot(x[:, 0], predict[:, 0], marker='.', color=(.9148, .604, .0945))
+            ax.scatter(x[:, 0], y[:, 0], marker='.', color=(0.3559, 0.7196, 0.8637))
+            ax.scatter(x[:, 0], predict[:, 0], marker='.', color=(.9148, .604, .0945))
 
         # Output of function has arbitrary dimensions
         if y.shape[1] > 1:
