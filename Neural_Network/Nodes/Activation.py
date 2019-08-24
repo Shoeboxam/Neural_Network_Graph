@@ -49,10 +49,15 @@ class Exponent(Node):
 
 class Softplus(Node):
     def propagate(self, features):
-        return np.log(1 + np.exp(np.vstack(features)))
+        return np.logaddexp(np.vstack(features), 0)
 
     def backpropagate(self, features, variable, gradient):
-        return gradient * np.swapaxes((1 + np.exp(-np.vstack(features)))**-1, -1, -2)
+        features = np.vstack(features)
+
+        # evaluate different functions depending on domain for numerical stability
+        return gradient * np.swapaxes(np.where(features >= 0,
+                        1.0 / (1.0 + np.exp(-features)),
+                        np.exp(features) / (1 + np.exp(features))), -1, -2)
 
 
 class Gaussian(Node):
@@ -74,7 +79,12 @@ class Sinusoidal(Node):
 
 class Logistic(Node):
     def propagate(self, features):
-        return 1.0 / (1.0 + np.exp(-np.vstack(features)))
+        features = np.vstack(features)
+
+        # evaluate different functions depending on domain for numerical stability
+        return np.where(features >= 0,
+                        1.0 / (1.0 + np.exp(-features)),
+                        np.exp(features) / (1 + np.exp(features)))
 
     def backpropagate(self, features, variable, grad):
         forward = self.propagate(features)
@@ -104,7 +114,7 @@ class ArcTan(Node):
         return np.arctan(np.vstack(features))
 
     def backpropagate(self, features, variable, gradient):
-        return gradient * np.swapaxes(1 / (np.vstack(features)**2 + 1))
+        return gradient * np.swapaxes(1 / (np.vstack(features)**2 + 1), -1, -2)
 
 
 class SoftSign(Node):

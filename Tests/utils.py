@@ -5,11 +5,10 @@ plt.style.use('fivethirtyeight')
 import numpy as np
 
 
-def train_utility(environment, loss, graph, plot=False, iterations=None):
+def train_utility(environment, loss, graph, plot=False, iterations=None, step=.01):
     # ~~~ Train the network ~~~
 
     plot_points = []
-    step = .01
     i = 0
 
     while True:
@@ -33,8 +32,7 @@ def train_utility(environment, loss, graph, plot=False, iterations=None):
         if i % 50 == 0:
             survey = environment.survey()
             prediction = graph(survey)
-
-            error = environment.error(survey['expected'], prediction)
+            error = environment.error(list(survey.values())[-1], prediction)
             plot_points.append((i, error))
 
             if plot:
@@ -54,4 +52,4 @@ def train_utility(environment, loss, graph, plot=False, iterations=None):
 
     survey = environment.survey()
     prediction = graph(survey)
-    return environment.error(survey['expected'], prediction)
+    return environment.error(list(survey.values())[-1], prediction)
