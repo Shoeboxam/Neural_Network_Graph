@@ -1,8 +1,8 @@
 from Neural_Network import *
-from Environments.Environment import Environment
+from Environments.Environment import Environment, ScatterMixin
 
 
-class Dataset(Environment):
+class Dataset(ScatterMixin, Environment):
 
     def __init__(self, **dataframes):
         lengths = set(len(dataframes[tag]) for tag in dataframes)
@@ -20,7 +20,7 @@ class Dataset(Environment):
         return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
 
     def survey(self, quantity=None):
-        quantity = min(quantity or 128, self._number_rows)
+        quantity = min(quantity or 256, self._number_rows)
         indices = np.linspace(0, self._number_rows, quantity).astype(np.uint8)
         return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
 

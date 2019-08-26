@@ -4,7 +4,7 @@ from Environments.Figlet_Fonts import FigletFonts
 from Tests.utils import train_utility
 
 
-def test_figlet_autoencoder(plot=False):
+def test_figlet_autoencoder(queue=None):
 
     ascii_vals = [i for i in range(33, 126)]
     font = 'banner3'
@@ -30,5 +30,5 @@ def test_figlet_autoencoder(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    error = train_utility(environment, loss, graph, plot=plot, iterations=3000)
+    error = train_utility(environment, loss, graph, queue=queue, iterations=3000)
     print('Error:', error)

@@ -1,5 +1,5 @@
 # Learn a continuous function
-from Environments.Environment import Environment
+from Environments.Environment import Environment, ScatterMixin, PlotMixin
 
 from inspect import signature
 
@@ -24,8 +24,6 @@ class Continuous(Environment):
                 self._range = [[min(candidates), max(candidates)]]
         else:
             self._range = range
-
-        self.viewpoint = np.random.randint(0, 360)
 
     def sample(self, quantity=None):
         quantity = quantity or 1
@@ -82,29 +80,14 @@ class Continuous(Environment):
         if tag is 'expected':
             return self._size_expected
 
-    def plot(self, plt, predict):
-        survey = self.survey()
-        x = survey['stimulus']
-        y = survey['expected']
-
-        # Output of function is 1 dimensional
-        if y.shape[1] == 1:
-            ax = plt.subplot(1, 2, 2)
-            plt.ylim(self._range[0])
-
-            ax.plot(x[:, 0], y[:, 0], marker='.', color=(0.3559, 0.7196, 0.8637))
-            ax.plot(x[:, 0], predict[:, 0], marker='.', color=(.9148, .604, .0945))
-
-        # Output of function has arbitrary dimensions
-        if y.shape[1] > 1:
-
-            ax = plt.subplot(1, 2, 2, projection='3d')
-            plt.title('Environment')
-            ax.scatter(x[:, 0], y[:, 0], y[:, 1], color=(0.3559, 0.7196, 0.8637))
-            ax.scatter(x[:, 0], predict[:, 0], predict[:, 1], color=(.9148, .604, .0945))
-            ax.view_init(elev=10., azim=self.viewpoint)
-            self.viewpoint += 5
-
     @staticmethod
     def error(expect, predict):
         return np.linalg.norm(expect - predict)
+
+
+class ContinuousLine(PlotMixin, Continuous):
+    pass
+
+
+class ContinuousScatter(ScatterMixin, Continuous):
+    pass

@@ -1,13 +1,17 @@
-from Neural_Network import *
-from Environments.Continuous_Function import Continuous
+from multiprocessing import Queue
 
-from Tests.utils import train_utility
+from Neural_Network import *
+from Environments.Continuous_Function import ContinuousLine, ContinuousScatter
+
+from Tests.utils import train_utility, plot_utility
 
 
 def test_continuous_3d_elbow(plot=False):
 
-    environment = Continuous([lambda a, b: (2 * b**2 + 0.5 * a**3),
-                              lambda a, b: (0.5 * a**3 + 2 * b**2 - b)], domain=[[-1, 1]] * 2)
+    environment = ContinuousScatter([
+        lambda a, b: (2 * b**2 + 0.5 * a**3),
+        lambda a, b: (0.5 * a**3 + 2 * b**2 - b)
+    ], domain=[[-1, 1]] * 2)
 
     # environment = Continuous([lambda a: (24 * a**2 + a),
     #                           lambda a: (-5 * a**3)], domain=[[-1, 1]])
@@ -37,14 +41,21 @@ def test_continuous_3d_elbow(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    error = train_utility(environment, loss, graph, plot=plot, iterations=3000)
+    queue = None
+    if plot:
+        queue = Queue()
+        plot_utility(environment, queue)
+
+    error = train_utility(environment, loss, graph, queue=queue, iterations=3000)
     print('Error:', error)
     assert error < 2
 
 
 def test_continuous_sideways_saddle(plot=False):
-    environment = Continuous([lambda a, b: (24 * a**2 - 2 * b**2 + a),
-                              lambda a, b: (12 * a ** 2 + 12 * b ** 3 + b)], domain=[[-1, 1]] * 2)
+    environment = ContinuousScatter([
+        lambda a, b: (24 * a**2 - 2 * b**2 + a),
+        lambda a, b: (12 * a ** 2 + 12 * b ** 3 + b)
+    ], domain=[[-1, 1]] * 2)
 
     # ~~~ Create the network ~~~
 
@@ -52,14 +63,14 @@ def test_continuous_sideways_saddle(plot=False):
     codomain = Source(environment, 'expected')
 
     # Layer one
-    weight_1 = Variable(np.random.uniform(size=(10, domain.output_nodes)), label='weight_1')
-    biases_1 = Variable(np.random.uniform(size=(10, 1)), label='bias_1')
-    hidden_1 = Logistic(weight_1 @ domain + biases_1)
+    weight_1 = Variable(np.random.uniform(size=(100, domain.output_nodes)), label='weight_1')
+    biases_1 = Variable(np.random.uniform(size=(100, 1)), label='bias_1')
+    hidden_1 = Softplus(weight_1 @ domain + biases_1)
 
     # Layer two
     weight_2 = Variable(np.random.uniform(size=(2, hidden_1.output_nodes)), label='weight_2')
     biases_2 = Variable(np.random.uniform(size=(2, 1)), label='bias_2')
-    graph = Logistic(weight_2 @ hidden_1 + biases_2)
+    graph = Softplus(weight_2 @ hidden_1 + biases_2)
 
     # Loss
     loss = SumSquared(graph, codomain)
@@ -67,13 +78,23 @@ def test_continuous_sideways_saddle(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    train_utility(environment, loss, graph, plot=plot)
+    queue = None
+    if plot:
+        queue = Queue()
+        plot_utility(environment, queue)
+
+    train_utility(environment, loss, graph, queue=queue)
 
 
 def test_continuous_periodic(plot=False):
 
-    environment = Continuous([lambda x: np.sin(x),
-                              lambda x: np.cos(x)], domain=[[-2 * np.pi, 2 * np.pi], [-np.pi, np.pi]])
+    environment = ContinuousLine([
+        lambda x: np.sin(x),
+        lambda x: np.cos(x)
+    ], domain=[
+        [-2 * np.pi, 2 * np.pi],
+        [-np.pi, np.pi]
+    ])
 
     # ~~~ Create the network ~~~
 
@@ -96,5 +117,10 @@ def test_continuous_periodic(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    error = train_utility(environment, loss, graph, plot=plot, iterations=1000)
+    queue = None
+    if plot:
+        queue = Queue()
+        plot_utility(environment, queue)
+
+    error = train_utility(environment, loss, graph, queue=queue, iterations=2000)
     assert error < 1

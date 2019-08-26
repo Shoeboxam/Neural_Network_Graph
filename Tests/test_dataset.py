@@ -2,7 +2,9 @@ import pandas
 
 from Neural_Network import *
 from Environments.Dataset import Dataset
-from Tests.utils import train_utility
+from Tests.utils import train_utility, plot_utility
+
+from multiprocessing import Queue
 
 
 def test_pums(plot=False):
@@ -25,7 +27,12 @@ def test_pums(plot=False):
     # Loss
     loss = CrossEntropy(graph, expected)
 
-    error = train_utility(environment, loss, graph, plot=plot)
+    queue = None
+    if plot:
+        queue = Queue()
+        plot_utility(environment, queue)
+
+    error = train_utility(environment, loss, graph, queue=queue, step=.0001)
     print('error', error)
 
 
@@ -54,7 +61,12 @@ def test_pums_multisource(plot=False):
     # Loss
     loss = CrossEntropy(graph, expected)
 
-    error = train_utility(environment, loss, graph, plot=plot)
+    queue = None
+    if plot:
+        queue = Queue()
+        plot_utility(environment, queue)
+
+    error = train_utility(environment, loss, graph, queue=queue)
     print('error', error)
 
 
@@ -87,5 +99,10 @@ def test_boston(plot=False):
     # Loss
     loss = SumSquared(graph, target)
 
-    error = train_utility(environment, loss, graph, plot=plot, iterations=1000, step=.0001)
+    queue = None
+    if plot:
+        queue = Queue()
+        plot_utility(environment, queue)
+
+    error = train_utility(environment, loss, graph, queue=queue, step=.0001)
     assert error < 100
