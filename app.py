@@ -18,6 +18,6 @@ if __name__ == '__main__':
     # test_continuous_sideways_saddle(plot=True)
     # test_continuous_periodic(plot=True)
     #
-    test_pums(plot=True)
+    # test_pums(plot=True)
     # test_pums_multisource(plot=True)
-    # test_boston(plot=True)
+    test_boston(plot=True)

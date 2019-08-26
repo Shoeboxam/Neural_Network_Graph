@@ -101,7 +101,7 @@ class Node(object):
 
     @property
     def T(self):
-        return np.swapaxes(self, 0, 1)
+        return np.swapaxes(self, -1, -2)
 
     def __matmul__(self, other):
         return Matmul((self, other))
@@ -218,6 +218,9 @@ class Variable(np.ndarray):
     def __str__(self):
         return '[' + 'x'.join([str(shape) for shape in self.shape]) + ']'
 
+    def __hash__(self):
+        return id(self)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~
 # Elementary operations
@@ -225,7 +228,7 @@ class Variable(np.ndarray):
 
 class Add(Node):
     def propagate(self, features):
-        return features[0] + features[1]
+        return np.sum(features, axis=0)
 
     def backpropagate(self, features, variable, gradient):
         if variable in self.children:
@@ -272,8 +275,9 @@ class Neg(Node):
 # Hadamard product
 class Mul(Node):
     def propagate(self, features):
-        return np.multiply(features[0], features[1])
+        return np.prod(features, axis=0)
 
+    # TODO: variadic mul derivative
     def backpropagate(self, features, variable, gradient):
         # Take derivative of left side
         if variable in self.children[0]:

@@ -130,8 +130,6 @@ class ScatterMixin(object):
 
             scatter_actuals._offsets3d = (x[:, 0, 0], y[:, 0, 0], y[:, 1, 0])
             scatter_predict._offsets3d = (x[:, 0, 0], prediction[:, 0, 0], prediction[:, 1, 0])
-            # scatter_actuals.set_offsets(np.column_stack((x[:, 0], y[:, 0], y[:, 1])))
-            # scatter_predict.set_offsets(np.column_stack((x[:, 0], prediction[:, 0], prediction[:, 1])))
             axis.view_init(elev=10., azim=self.viewpoint)
             self.viewpoint += 5
 

@@ -1,4 +1,4 @@
-from Neural_Network.Node import Node
+from Neural_Network.node import Node
 import numpy as np
 
 

@@ -1,4 +1,4 @@
-from ..Node import *
+from ..node import *
 
 # using hadamard identity on elementwise functions for efficiency
 # A @ diag(b) == A * b.T

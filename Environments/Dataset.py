@@ -27,27 +27,6 @@ class Dataset(ScatterMixin, Environment):
     def output_nodes(self, tag):
         return self._dataframes[tag].shape[1]
 
-    def plot(self, plt, predict):
-        survey = self.survey()
-        x, *_, y = list(survey.values())
-
-        # Output of function is 1 dimensional
-        if y.shape[1] == 1:
-            ax = plt.subplot(1, 2, 2)
-
-            ax.scatter(x[:, 0], y[:, 0], marker='.', color=(0.3559, 0.7196, 0.8637))
-            ax.scatter(x[:, 0], predict[:, 0], marker='.', color=(.9148, .604, .0945))
-
-        # Output of function has arbitrary dimensions
-        if y.shape[1] > 1:
-
-            ax = plt.subplot(1, 2, 2, projection='3d')
-            plt.title('Environment')
-            ax.scatter(x[:, 0], y[:, 0], y[:, 1], color=(0.3559, 0.7196, 0.8637))
-            ax.scatter(x[:, 0], predict[:, 0], predict[:, 1], color=(.9148, .604, .0945))
-            ax.view_init(elev=10., azim=self.viewpoint)
-            self.viewpoint += 5
-
     @staticmethod
     def error(expect, predict):
         return np.linalg.norm(expect - predict)

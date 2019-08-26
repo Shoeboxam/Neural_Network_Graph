@@ -1,9 +1,8 @@
-from multiprocessing import Queue
-
 from Neural_Network import *
+import Neural_Network.optimizer as optimizers
 from Environments.Continuous_Function import ContinuousLine, ContinuousScatter
 
-from Tests.utils import train_utility, plot_utility
+from Tests.utils import pytest_utility
 
 
 def test_continuous_3d_elbow(plot=False):
@@ -41,12 +40,9 @@ def test_continuous_3d_elbow(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    queue = None
-    if plot:
-        queue = Queue()
-        plot_utility(environment, queue)
+    optimizer = optimizers.GradientDescent(loss, rate=.0001)
 
-    error = train_utility(environment, loss, graph, queue=queue, iterations=3000)
+    error = pytest_utility(environment, optimizer, graph, plot, iterations=3000)
     print('Error:', error)
     assert error < 2
 
@@ -78,12 +74,9 @@ def test_continuous_sideways_saddle(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    queue = None
-    if plot:
-        queue = Queue()
-        plot_utility(environment, queue)
+    optimizer = optimizers.GradientDescent(loss, rate=.0001)
 
-    train_utility(environment, loss, graph, queue=queue)
+    error = pytest_utility(environment, optimizer, graph, plot, iterations=3000)
 
 
 def test_continuous_periodic(plot=False):
@@ -116,11 +109,7 @@ def test_continuous_periodic(plot=False):
 
     print("Network Summary:")
     print(str(graph))
+    optimizer = optimizers.GradientDescent(loss, rate=.0001)
 
-    queue = None
-    if plot:
-        queue = Queue()
-        plot_utility(environment, queue)
-
-    error = train_utility(environment, loss, graph, queue=queue, iterations=2000)
+    error = pytest_utility(environment, optimizer, graph, plot, iterations=2000)
     assert error < 1

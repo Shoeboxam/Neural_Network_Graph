@@ -1,12 +1,12 @@
 import numpy as np
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
 plt.style.use('fivethirtyeight')
 
 
-def train_utility(environment, loss, graph, queue=None, iterations=None, step=.01):
+def train_utility(environment, optimizer, graph, queue=None, iterations=None):
     # ~~~ Train the network ~~~
 
     i = 0
@@ -18,16 +18,7 @@ def train_utility(environment, loss, graph, queue=None, iterations=None, step=.0
         i += 1
         sample = environment.sample(quantity=20)
 
-        for variable in graph:
-            # print('VARIABLE STEP:')
-            # print(variable.label)
-            grad = loss.gradient(sample, variable)
-
-            # print('final shapes:')
-            # print(grad.shape)
-            # print(variable.shape)
-            # print(i)
-            variable -= step * np.average(grad, axis=0)
+        optimizer.iterate(sample)
 
         if i % 50 == 0:
             survey = environment.survey()
@@ -101,3 +92,19 @@ def plot_task(environment, plotting_queue):
         blit=environment.blit)
 
     plt.show()
+
+
+def pytest_utility(environment, optimizer, graph, plot, iterations=None):
+
+    queue = None
+    plot_process = None
+    if plot:
+        queue = Queue()
+        plot_process = plot_utility(environment, queue)
+
+    try:
+        return train_utility(environment, optimizer, graph, queue=queue, iterations=iterations)
+    except Exception as exc:
+        if plot_process:
+            plot_process.terminate()
+        raise exc

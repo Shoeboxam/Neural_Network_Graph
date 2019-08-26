@@ -1,3 +1,3 @@
-from .Nodes import *
-from .Node import Variable
+from .layer import *
+from .node import Variable
 

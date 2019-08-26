@@ -2,9 +2,8 @@ import pandas
 
 from Neural_Network import *
 from Environments.Dataset import Dataset
-from Tests.utils import train_utility, plot_utility
-
-from multiprocessing import Queue
+import Neural_Network.optimizer as optimizers
+from Tests.utils import pytest_utility
 
 
 def test_pums(plot=False):
@@ -26,13 +25,9 @@ def test_pums(plot=False):
 
     # Loss
     loss = CrossEntropy(graph, expected)
+    optimizer = optimizers.GradientDescent(loss, rate=.0001)
 
-    queue = None
-    if plot:
-        queue = Queue()
-        plot_utility(environment, queue)
-
-    error = train_utility(environment, loss, graph, queue=queue, step=.0001)
+    error = pytest_utility(environment, optimizer, graph, plot)
     print('error', error)
 
 
@@ -60,13 +55,9 @@ def test_pums_multisource(plot=False):
 
     # Loss
     loss = CrossEntropy(graph, expected)
+    optimizer = optimizers.GradientDescent(loss)
 
-    queue = None
-    if plot:
-        queue = Queue()
-        plot_utility(environment, queue)
-
-    error = train_utility(environment, loss, graph, queue=queue)
+    error = pytest_utility(environment, optimizer, graph, plot)
     print('error', error)
 
 
@@ -98,11 +89,8 @@ def test_boston(plot=False):
 
     # Loss
     loss = SumSquared(graph, target)
+    optimizer = optimizers.Quickprop(loss)
 
-    queue = None
-    if plot:
-        queue = Queue()
-        plot_utility(environment, queue)
+    error = pytest_utility(environment, optimizer, graph, plot)
 
-    error = train_utility(environment, loss, graph, queue=queue, step=.0001)
     assert error < 100
