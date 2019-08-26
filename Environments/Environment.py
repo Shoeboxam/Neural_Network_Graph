@@ -31,6 +31,10 @@ class Environment(object):
     def plot_update(self, survey, prediction, axis, components):
         pass
 
+    @abc.abstractmethod
+    def __len__(self):
+        pass
+
 
 class PlotMixin(object):
     blit = True

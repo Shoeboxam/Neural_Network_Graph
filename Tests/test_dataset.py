@@ -3,6 +3,7 @@ import pandas
 from Neural_Network import *
 from Environments.Dataset import Dataset
 import Neural_Network.optimizer as optimizers
+from Neural_Network.optimizer_private import make_private_optimizer
 from Tests.utils import pytest_utility
 
 
@@ -25,7 +26,15 @@ def test_pums(plot=False):
 
     # Loss
     loss = CrossEntropy(graph, expected)
-    optimizer = optimizers.GradientDescent(loss, rate=.0001)
+
+    optimizer_class = optimizers.GradientDescent
+    optimizer_class = make_private_optimizer(
+        optimizer_class,
+        epsilon=1, delta=1e-5,
+        clipping_interval=10,
+        num_rows=len(environment))
+
+    optimizer = optimizer_class(loss, rate=.0001)
 
     error = pytest_utility(environment, optimizer, graph, plot)
     print('error', error)
@@ -89,7 +98,7 @@ def test_boston(plot=False):
 
     # Loss
     loss = SumSquared(graph, target)
-    optimizer = optimizers.Quickprop(loss)
+    optimizer = optimizers.GradientDescent(loss, rate=.001)
 
     error = pytest_utility(environment, optimizer, graph, plot)
 

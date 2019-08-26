@@ -1,6 +1,7 @@
 from Neural_Network import *
 import Neural_Network.optimizer as optimizers
 from Environments.Continuous_Function import ContinuousLine, ContinuousScatter
+from Neural_Network.optimizer_private import make_private_optimizer
 
 from Tests.utils import pytest_utility
 
@@ -40,7 +41,14 @@ def test_continuous_3d_elbow(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    optimizer = optimizers.GradientDescent(loss, rate=.0001)
+    optimizer_class = optimizers.GradientDescent
+    optimizer_class = make_private_optimizer(
+        optimizer_class,
+        epsilon=1, delta=1e-5,
+        clipping_interval=10,
+        num_rows=1000)
+
+    optimizer = optimizer_class(loss, rate=.01)
 
     error = pytest_utility(environment, optimizer, graph, plot, iterations=3000)
     print('Error:', error)
@@ -74,7 +82,14 @@ def test_continuous_sideways_saddle(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    optimizer = optimizers.GradientDescent(loss, rate=.0001)
+    optimizer_class = optimizers.GradientDescent
+    optimizer_class = make_private_optimizer(
+        optimizer_class,
+        epsilon=1, delta=1e-5,
+        clipping_interval=10,
+        num_rows=1000)
+
+    optimizer = optimizer_class(loss, rate=.01)
 
     error = pytest_utility(environment, optimizer, graph, plot, iterations=3000)
 
@@ -109,7 +124,15 @@ def test_continuous_periodic(plot=False):
 
     print("Network Summary:")
     print(str(graph))
-    optimizer = optimizers.GradientDescent(loss, rate=.0001)
 
-    error = pytest_utility(environment, optimizer, graph, plot, iterations=2000)
+    optimizer_class = optimizers.GradientDescent
+    optimizer_class = make_private_optimizer(
+        optimizer_class,
+        epsilon=1, delta=1e-5,
+        clipping_interval=10,
+        num_rows=1000)
+
+    optimizer = optimizer_class(loss, rate=.001)
+
+    error = pytest_utility(environment, optimizer, graph, plot, iterations=5000)
     assert error < 1

@@ -3,8 +3,13 @@ from multiprocessing import Process, Queue
 
 import matplotlib.pyplot as plt
 from matplotlib import animation
+
+from Neural_Network.optimizer_private import make_private_optimizer
+
 plt.style.use('fivethirtyeight')
 
+# turn on/off the differential privacy mixin
+private = True
 
 def train_utility(environment, optimizer, graph, queue=None, iterations=None):
     # ~~~ Train the network ~~~

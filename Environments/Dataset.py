@@ -27,6 +27,9 @@ class Dataset(ScatterMixin, Environment):
     def output_nodes(self, tag):
         return self._dataframes[tag].shape[1]
 
+    def __len__(self):
+        return self._number_rows
+
     @staticmethod
     def error(expect, predict):
         return np.linalg.norm(expect - predict)

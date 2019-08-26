@@ -80,6 +80,9 @@ class Continuous(Environment):
         if tag is 'expected':
             return self._size_expected
 
+    def __len__(self):
+        return float('inf')
+
     @staticmethod
     def error(expect, predict):
         return np.linalg.norm(expect - predict)

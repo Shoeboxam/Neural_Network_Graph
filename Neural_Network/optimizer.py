@@ -28,7 +28,7 @@ class Optimizer(object):
             gradient = np.average(self.function.gradient(stimulus, var), axis=0)
 
             var += self.iterate_variable(var, stimulus, gradient)
-            self.iteration += 1
+        self.iteration += 1
 
     @abc.abstractmethod
     def iterate_variable(self, var, stimulus, gradient):
@@ -36,7 +36,7 @@ class Optimizer(object):
 
     @staticmethod
     def _default_hyperparameter(value, default):
-        default_scalar = value if type(value) is dict else default
+        default_scalar = default if value is None or type(value) is dict else value
         hyperparameter = defaultdict(lambda: default_scalar)
         if type(value) is dict:
             for variable in value:
