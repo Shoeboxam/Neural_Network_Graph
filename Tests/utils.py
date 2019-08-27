@@ -8,14 +8,17 @@ from matplotlib import animation
 plt.style.use('fivethirtyeight')
 
 
-def train_utility(environment, optimizer, graph, queue=None, iterations=None):
+def train_utility(environment, optimizer, graph, queue=None, iterations=None, batch_size=20):
 
     i = 0
 
     def should_continue():
+
         if iterations is not None and i > iterations:
+            print(f'Reached iteration limit ({i})')
             return False
         if issubclass(type(optimizer), DPMixin) and optimizer.epsilon_used >= optimizer.epsilon:
+            print(f'Exhausted privacy budget on iteration ({i})')
             return False
 
         return True
@@ -23,7 +26,7 @@ def train_utility(environment, optimizer, graph, queue=None, iterations=None):
     while should_continue():
 
         i += 1
-        sample = environment.sample(quantity=20)
+        sample = environment.sample(quantity=batch_size)
 
         optimizer.iterate(sample)
 
@@ -80,7 +83,7 @@ def plot_task(plotters, environment, plotting_queue):
     plt.show()
 
 
-def pytest_utility(environment, optimizer, graph, plotters, iterations=None):
+def pytest_utility(environment, optimizer, graph, plotters, iterations=None, batch_size=None):
 
     queue = None
     plot_process = None
@@ -89,7 +92,7 @@ def pytest_utility(environment, optimizer, graph, plotters, iterations=None):
         plot_process = plot_utility(plotters, environment, queue)
 
     try:
-        return train_utility(environment, optimizer, graph, queue=queue, iterations=iterations)
+        return train_utility(environment, optimizer, graph, queue=queue, iterations=iterations, batch_size=batch_size)
 
     except KeyboardInterrupt:
         if plot_process:

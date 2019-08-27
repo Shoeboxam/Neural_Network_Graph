@@ -136,3 +136,49 @@ def test_boston(plot=False):
     error = pytest_utility(environment, optimizer, graph, plotters)
 
     assert error < 100
+
+
+def test_iris(plot=False):
+    try:
+        from sklearn.datasets import load_iris
+    except ImportError:
+        print('Sklearn not installed. Install Sklearn to test with this dataset.')
+        return
+
+    loaded = load_iris()
+    environment = Dataset(
+        data=(loaded['data'] - np.mean(loaded['data'])) / np.std(loaded['data']),
+        target=loaded['target'][:, None])
+
+    # data sources
+    data = Source(environment, 'data')
+    target = Source(environment, 'target')
+
+    # Layer one
+    weight_1 = Variable(np.random.uniform(size=(4, data.output_nodes)))
+    biases_1 = Variable(np.random.uniform(size=(4, 1)))
+    hidden_1 = Softplus(weight_1 @ data + biases_1)
+
+    # Layer two
+    weight_2 = Variable(np.random.uniform(size=(1, hidden_1.output_nodes)))
+    biases_2 = Variable(np.random.uniform(size=(1, 1)))
+    graph = Softplus(weight_2 @ hidden_1 + biases_2)
+
+    # Loss
+    loss = SumSquared(graph, target)
+    optimizer_class = optimizers.Adagrad
+    optimizer_class = make_private_optimizer(
+        optimizer_class,
+        epsilon=10, delta=1e-5,
+        clipping_interval=.5,
+        num_rows=len(environment))
+    optimizer = optimizer_class(loss, rate=.01)
+
+    plotters = [
+        PlotError(121, environment.error),
+        PlotHeatmap(122)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters, batch_size=2)
+
+    assert error < 100

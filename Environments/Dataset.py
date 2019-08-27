@@ -21,7 +21,7 @@ class Dataset(Environment):
 
     def survey(self, quantity=None):
         quantity = min(quantity or 256, self._number_rows)
-        indices = np.linspace(0, self._number_rows, quantity).astype(np.uint8)
+        indices = np.linspace(0, self._number_rows - 1, quantity, dtype=np.uint)
         return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
 
     def output_nodes(self, tag):

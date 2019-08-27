@@ -10,7 +10,8 @@ from Tests.test_continuous import (
 from Tests.test_dataset import (
     test_pums,
     test_pums_multisource,
-    test_boston
+    test_boston,
+    test_iris
 )
 
 from Tests.test_autoencoder import test_figlet_autoencoder
@@ -29,5 +30,6 @@ if __name__ == '__main__':
     # test_pums(plot=plot)
     # test_pums_multisource(plot=plot)
     # test_boston(plot=plot)
+    test_iris(plot=plot)
 
-    test_figlet_autoencoder(plot=plot)
+    # test_figlet_autoencoder(plot=plot)
