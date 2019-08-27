@@ -174,7 +174,7 @@ class PlotLine(Plot):
                 (get_data(layer['x']), get_data(layer['y']))
             ).T)
 
-        else:
+        if 'z' in self.layers[0]:
             for layer, component in zip(self.layers, self.components):
                 component.set_3d_properties(get_data(layer['z']))
             self.axis.view_init(elev=10., azim=self.viewpoint)

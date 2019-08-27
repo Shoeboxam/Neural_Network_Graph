@@ -77,8 +77,6 @@ def plot_task(plotters, environment, plotting_queue):
         interval=20,
         blit=all(plotter.blit for plotter in plotters))
 
-    print('test')
-
     plt.show()
 
 
