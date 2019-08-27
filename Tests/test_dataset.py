@@ -1,5 +1,6 @@
 import pandas
 
+from Environments.base import PlotScatter, PlotHeatmap, PlotError
 from Neural_Network import *
 from Environments.Dataset import Dataset
 import Neural_Network.optimizer as optimizers
@@ -9,10 +10,13 @@ from Tests.utils import pytest_utility
 
 def test_pums(plot=False):
     dataframe = pandas.read_csv('/home/shoe/Desktop/MaPUMS5full.csv')
+    predictors = ['age', 'educ', 'income', 'divorced']
+    targets = ['married']
+    data_stimulus = dataframe[predictors].to_numpy()
 
     environment = Dataset(
-        stimulus=dataframe[['educ']].to_numpy(),
-        expected=dataframe[['married']].to_numpy())
+        stimulus=(data_stimulus - data_stimulus.mean(axis=0)) / data_stimulus.std(axis=0),
+        expected=dataframe[targets].to_numpy())
 
     # data sources
     stimulus = Source(environment, 'stimulus')
@@ -27,16 +31,35 @@ def test_pums(plot=False):
     # Loss
     loss = CrossEntropy(graph, expected)
 
-    optimizer_class = optimizers.GradientDescent
+    optimizer_class = optimizers.Adagrad
     optimizer_class = make_private_optimizer(
         optimizer_class,
         epsilon=1, delta=1e-5,
         clipping_interval=10,
         num_rows=len(environment))
 
-    optimizer = optimizer_class(loss, rate=.0001)
+    optimizer = optimizer_class(loss, rate=.001)
 
-    error = pytest_utility(environment, optimizer, graph, plot)
+    plotters = [
+        PlotError(221, error=environment.error),
+        PlotHeatmap(222, target_labels=['married']),
+        PlotScatter(223, layers=[{
+            'x': {'source': 'dataset', 'tag': 'stimulus', 'column': 0},
+            'y': {'source': 'dataset', 'tag': 'expected', 'column': 0}
+        }, {
+            'x': {'source': 'dataset', 'tag': 'stimulus', 'column': 0},
+            'y': {'source': 'produce', 'tag': 'predicted', 'column': 0}
+        }], xlabel=predictors[0], ylabel=targets[0]),
+        PlotScatter(224, layers=[{
+            'x': {'source': 'dataset', 'tag': 'stimulus', 'column': 1},
+            'y': {'source': 'dataset', 'tag': 'expected', 'column': 0}
+        }, {
+            'x': {'source': 'dataset', 'tag': 'stimulus', 'column': 1},
+            'y': {'source': 'produce', 'tag': 'predicted', 'column': 0}
+        }], xlabel=predictors[1], ylabel=targets[0])
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters)
     print('error', error)
 
 
@@ -66,7 +89,12 @@ def test_pums_multisource(plot=False):
     loss = CrossEntropy(graph, expected)
     optimizer = optimizers.GradientDescent(loss)
 
-    error = pytest_utility(environment, optimizer, graph, plot)
+    plotters = [
+        PlotError(121, environment.error),
+        PlotScatter(122)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters)
     print('error', error)
 
 
@@ -100,6 +128,11 @@ def test_boston(plot=False):
     loss = SumSquared(graph, target)
     optimizer = optimizers.GradientDescent(loss, rate=.001)
 
-    error = pytest_utility(environment, optimizer, graph, plot)
+    plotters = [
+        PlotError(121, environment.error),
+        PlotScatter(122)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters)
 
     assert error < 100

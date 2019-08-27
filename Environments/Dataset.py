@@ -1,8 +1,8 @@
 from Neural_Network import *
-from Environments.Environment import Environment, ScatterMixin
+from Environments.base import Environment
 
 
-class Dataset(ScatterMixin, Environment):
+class Dataset(Environment):
 
     def __init__(self, **dataframes):
         lengths = set(len(dataframes[tag]) for tag in dataframes)

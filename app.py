@@ -14,10 +14,10 @@ plot = True
 
 if __name__ == '__main__':
 
-    # test_continuous_3d_elbow(plot=True)
-    # test_continuous_sideways_saddle(plot=True)
-    # test_continuous_periodic(plot=True)
+    # test_continuous_3d_elbow(plot=plot)
+    test_continuous_sideways_saddle(plot=plot)
+    # test_continuous_periodic(plot=plot)
     #
-    # test_pums(plot=True)
-    # test_pums_multisource(plot=True)
-    test_boston(plot=True)
+    # test_pums(plot=plot)
+    # test_pums_multisource(plot=plot)
+    # test_boston(plot=plot)

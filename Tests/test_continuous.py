@@ -1,6 +1,7 @@
+from Environments.base import PlotScatter, PlotLine, PlotError
 from Neural_Network import *
 import Neural_Network.optimizer as optimizers
-from Environments.Continuous_Function import ContinuousLine, ContinuousScatter
+from Environments.Continuous_Function import Continuous
 from Neural_Network.optimizer_private import make_private_optimizer
 
 from Tests.utils import pytest_utility
@@ -8,7 +9,7 @@ from Tests.utils import pytest_utility
 
 def test_continuous_3d_elbow(plot=False):
 
-    environment = ContinuousScatter([
+    environment = Continuous([
         lambda a, b: (2 * b**2 + 0.5 * a**3),
         lambda a, b: (0.5 * a**3 + 2 * b**2 - b)
     ], domain=[[-1, 1]] * 2)
@@ -41,22 +42,27 @@ def test_continuous_3d_elbow(plot=False):
     print("Network Summary:")
     print(str(graph))
 
-    optimizer_class = optimizers.GradientDescent
+    optimizer_class = optimizers.Adagrad
     optimizer_class = make_private_optimizer(
         optimizer_class,
         epsilon=1, delta=1e-5,
         clipping_interval=10,
-        num_rows=1000)
+        num_rows=1000000)
 
-    optimizer = optimizer_class(loss, rate=.01)
+    optimizer = optimizer_class(loss, rate=.005)
 
-    error = pytest_utility(environment, optimizer, graph, plot, iterations=3000)
+    plotters = [
+        PlotError(121, environment.error),
+        PlotScatter(122)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters, iterations=None)
     print('Error:', error)
     assert error < 2
 
 
 def test_continuous_sideways_saddle(plot=False):
-    environment = ContinuousScatter([
+    environment = Continuous([
         lambda a, b: (24 * a**2 - 2 * b**2 + a),
         lambda a, b: (12 * a ** 2 + 12 * b ** 3 + b)
     ], domain=[[-1, 1]] * 2)
@@ -87,16 +93,22 @@ def test_continuous_sideways_saddle(plot=False):
         optimizer_class,
         epsilon=1, delta=1e-5,
         clipping_interval=10,
-        num_rows=1000)
+        num_rows=1000000)
 
-    optimizer = optimizer_class(loss, rate=.01)
+    optimizer = optimizer_class(loss, rate=.005)
 
-    error = pytest_utility(environment, optimizer, graph, plot, iterations=3000)
+    plotters = [
+        PlotError(121, environment.error),
+        PlotScatter(122)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters, iterations=3000)
+    print('Error:', error)
 
 
 def test_continuous_periodic(plot=False):
 
-    environment = ContinuousLine([
+    environment = Continuous([
         lambda x: np.sin(x),
         lambda x: np.cos(x)
     ], domain=[
@@ -130,9 +142,14 @@ def test_continuous_periodic(plot=False):
         optimizer_class,
         epsilon=1, delta=1e-5,
         clipping_interval=10,
-        num_rows=1000)
+        num_rows=100000)
 
     optimizer = optimizer_class(loss, rate=.001)
 
-    error = pytest_utility(environment, optimizer, graph, plot, iterations=5000)
+    plotters = [
+        PlotError(121, environment.error),
+        PlotLine(122)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters, iterations=5000)
     assert error < 1

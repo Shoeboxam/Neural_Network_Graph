@@ -1,5 +1,5 @@
 # Learn a continuous function
-from Environments.Environment import Environment, ScatterMixin, PlotMixin
+from Environments.base import Environment
 
 from inspect import signature
 
@@ -86,11 +86,3 @@ class Continuous(Environment):
     @staticmethod
     def error(expect, predict):
         return np.linalg.norm(expect - predict)
-
-
-class ContinuousLine(PlotMixin, Continuous):
-    pass
-
-
-class ContinuousScatter(ScatterMixin, Continuous):
-    pass

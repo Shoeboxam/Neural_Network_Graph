@@ -1,5 +1,5 @@
 from Neural_Network import *
-from Environments.Environment import Environment
+from Environments.base import Environment
 
 from PIL import Image
 
