@@ -1,10 +1,14 @@
-from Neural_Network import *
+from Environments.base import PlotError
 from Environments.Figlet_Fonts import FigletFonts
 
-from Tests.utils import train_utility
+from Neural_Network import *
+import Neural_Network.optimizer as optimizers
+from Neural_Network.optimizer_private import make_private_optimizer
+
+from Tests.utils import pytest_utility
 
 
-def test_figlet_autoencoder(queue=None):
+def test_figlet_autoencoder(plot=False):
 
     ascii_vals = [i for i in range(33, 126)]
     font = 'banner3'
@@ -30,5 +34,18 @@ def test_figlet_autoencoder(queue=None):
     print("Network Summary:")
     print(str(graph))
 
-    error = train_utility(environment, loss, graph, queue=queue, iterations=3000)
+    optimizer_class = optimizers.Adagrad
+    # optimizer_class = make_private_optimizer(
+    #     optimizer_class,
+    #     epsilon=1, delta=1e-5,
+    #     clipping_interval=10,
+    #     num_rows=1000000)
+
+    optimizer = optimizer_class(loss, rate=.01)
+
+    plotters = [
+        PlotError(111, environment.error)
+    ] if plot else None
+
+    error = pytest_utility(environment, optimizer, graph, plotters, iterations=None)
     print('Error:', error)
