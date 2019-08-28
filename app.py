@@ -1,20 +1,7 @@
-from Tests.test_continuous import (
-    test_continuous_sideways_saddle,
-    test_continuous_curve,
-    test_continuous_unbounded_variation,
-    test_continuous_polynomial,
-    test_continuous_3d_elbow,
-    test_continuous_periodic
-)
 
 from Tests.test_dataset import (
-    test_pums,
-    test_pums_multisource,
-    test_boston,
     test_iris
 )
-
-from Tests.test_autoencoder import test_figlet_autoencoder
 
 plot = True
 

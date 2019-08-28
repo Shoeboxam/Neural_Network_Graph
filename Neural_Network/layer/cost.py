@@ -1,5 +1,11 @@
-from ..node import *
-import numpy as np
+import abc
+
+from config import NP_BACKEND
+from Neural_Network.node import Node
+if NP_BACKEND == 'NUMPY':
+    import numpy as np
+elif NP_BACKEND == 'JAX':
+    import jax.numpy as np
 
 
 # NOTE: The signatures of cost functions do not match the parent class

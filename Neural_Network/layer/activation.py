@@ -1,4 +1,10 @@
-from ..node import *
+from config import NP_BACKEND
+from Neural_Network.node import Node
+
+if NP_BACKEND == 'NUMPY':
+    import numpy as np
+elif NP_BACKEND == 'JAX':
+    import jax.numpy as np
 
 # using hadamard identity on elementwise functions for efficiency
 # A @ diag(b) == A * b.T

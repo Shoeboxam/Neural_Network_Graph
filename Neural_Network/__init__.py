@@ -1,3 +1,2 @@
-from .layer import *
-from .node import Variable
-
+from Neural_Network.layer import *
+from Neural_Network.node import Variable, Node

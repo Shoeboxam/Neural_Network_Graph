@@ -1,5 +1,10 @@
 import Neural_Network.optimizer as optimizers
-import numpy as np
+from config import NP_BACKEND
+
+if NP_BACKEND == 'NUMPY':
+    import numpy as np
+elif NP_BACKEND == 'JAX':
+    import jax.numpy as np
 
 
 # differentially private optimization

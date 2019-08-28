@@ -1,6 +1,6 @@
 import pyfiglet
 
-from Neural_Network import *
+import numpy as np
 from Environments.base import Environment
 
 

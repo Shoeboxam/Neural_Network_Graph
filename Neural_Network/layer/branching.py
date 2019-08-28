@@ -1,4 +1,10 @@
-from ..node import *
+from config import NP_BACKEND
+from Neural_Network.node import Node
+
+if NP_BACKEND == 'NUMPY':
+    import numpy as np
+elif NP_BACKEND == 'JAX':
+    import jax.numpy as np
 
 
 class Stack(Node):

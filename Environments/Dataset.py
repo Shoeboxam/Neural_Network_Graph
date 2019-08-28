@@ -1,5 +1,5 @@
-from Neural_Network import *
 from Environments.base import Environment
+import numpy as np
 
 
 class Dataset(Environment):
@@ -17,12 +17,12 @@ class Dataset(Environment):
     def sample(self, quantity=None):
         quantity = quantity or 1
         indices = np.random.randint(0, self._number_rows, size=quantity)
-        return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
+        return {tag: self._dataframes[tag][indices, ..., None] for tag in self._dataframes}
 
     def survey(self, quantity=None):
         quantity = min(quantity or 256, self._number_rows)
-        indices = np.linspace(0, self._number_rows - 1, quantity, dtype=np.uint)
-        return {tag: self._dataframes[tag][indices][..., None] for tag in self._dataframes}
+        indices = np.linspace(0, self._number_rows - 1, quantity, dtype=np.int32)
+        return {tag: self._dataframes[tag][indices, ..., None] for tag in self._dataframes}
 
     def output_nodes(self, tag):
         return self._dataframes[tag].shape[1]

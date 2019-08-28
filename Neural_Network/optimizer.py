@@ -1,6 +1,11 @@
 import abc
-import numpy as np
 from collections import defaultdict
+from config import NP_BACKEND
+
+if NP_BACKEND == 'NUMPY':
+    import numpy as np
+elif NP_BACKEND == 'JAX':
+    import jax.numpy as np
 
 # any class not listed in __all__ is not exported/available for use
 __all__ = [

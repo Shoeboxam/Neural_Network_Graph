@@ -1,5 +1,12 @@
-import numpy as np
 import abc
+
+from config import NP_BACKEND
+
+if NP_BACKEND == 'NUMPY':
+    import numpy as np
+elif NP_BACKEND == 'JAX':
+    import jax.numpy as np
+
 
 _scalar = [str, int, float]
 
@@ -27,11 +34,6 @@ def store(method):
     return decorator
 
 
-# a value may be a constant, or may be a network component
-def is_network(value):
-    return issubclass(type(value), Node) or issubclass(type(value), Variable)
-
-
 class Node(object):
     def __init__(self, children):
         if type(children) not in [list, tuple]:
@@ -39,7 +41,6 @@ class Node(object):
         self.children = children
 
         # self._stored_variables = None
-        # self._stored_input_nodes = None
         # self._stored_output_nodes = None
 
         self._cached___call___id = 0
@@ -47,7 +48,7 @@ class Node(object):
 
     @cache
     def __call__(self, stimulus):
-        return self.propagate([child(stimulus) if is_network(child) else child for child in self.children])
+        return self.propagate([child(stimulus) if issubclass(type(child), Node) else child for child in self.children])
 
     def gradient(self, stimulus, variable, grad):
         features = [child(stimulus) for child in self.children]
@@ -82,26 +83,14 @@ class Node(object):
 
     @property
     # @store
-    def input_nodes(self):
-        """Count the number of input nodes"""
-        node_count = 0
-        for child in self.children:
-            if child.__class__.__name__ in ['Transform', 'Stimulus']:
-                node_count += child.output_nodes
-            else:
-                node_count += child.input_nodes
-        return node_count
-
-    @property
-    # @store
     def variables(self):
         """List the input variables"""
-        return [variable for child in self.children if is_network(child)
+        return [variable for child in self.children if issubclass(type(child), Node)
                 for variable in child.variables]
 
     @property
     def T(self):
-        return np.swapaxes(self, -1, -2)
+        return Transpose(self)
 
     def __matmul__(self, other):
         return Matmul((self, other))
@@ -137,89 +126,75 @@ class Node(object):
         return self.__class__.__name__ + '(' + ','.join([str(child) for child in self.children]) + ')'
 
 
-class Variable(np.ndarray):
-    """Datatype for differentiable variables"""
+class Variable(Node):
+    # prior versions inherited from np.ndarray. Switched to composition for jax compatibility
+    def __init__(self, value, fixed=False, label=None):
+        super().__init__(children=[])
+        self.value = value
+        self.fixed = fixed
+        self.label = label or id(self)
 
-    # Custom operations for 3D and certain non-conformable arrays
-    # Enforces mutability for all numerics
-    # Provides seeds for recursive calls in the graph network
+    # Variable is a leaf in the network, so branching and pass-through logic is unnecessary and overriden
+    def __call__(self, stimulus, parent=None):
+        return self.propagate(stimulus)
 
-    def __new__(cls, arr, label=None):
-        obj = np.array(arr).view(cls)
-        return obj
+    def propagate(self, stimulus):
+        return self.value
 
-    def __init__(self, arr, label=None, **kwargs):
-        self.label = label
-        super().__init__(**kwargs)
-
-    def __call__(self, stimulus):
-        if np.isscalar(self):
-            return np.array(self)
-        return np.array(self)
-
-    def gradient(self, stimulus, variable, grad):
-        if variable is not self:
-            raise ValueError("The gradient should not have been backpropagated here. Not optimal.")
-            # return grad * 0
-
-        return grad  # @ np.eye(self.output_nodes)
+    def backpropagate(self, features, variable, grad):
+        if variable is self:
+            return np.eye(self.output_nodes)
+        return np.zeros([self.output_nodes] * 2)
 
     @property
     def output_nodes(self):
         return self.shape[0]
 
     @property
-    def input_nodes(self):
-        return 0
+    def shape(self):
+        return self.value.shape
 
     @property
     def variables(self):
-        return [self]
-
-    @property
-    def T(self):
-        return np.swapaxes(self, 0, 1)
-
-    def __matmul__(self, other):
-        return Matmul((self, other))
-
-    def __add__(self, other):
-        return Add((self, other))
-
-    def __sub__(self, other):
-        return Sub((self, other))
-
-    def __pos__(self, other):
-        return self
-
-    def __neg__(self):
-        return Neg(self)
-
-    def __mul__(self, other):
-        return Mul((self, other))
-
-    def __truediv__(self, other):
-        return Div((self, other))
-
-    def __pow__(self, power, modulo=None):
-        return Pow((self, power))
+        return [] if self.fixed else [self]
 
     # Variables are, by design, only equivalent if they share the same reference
     # If two different variables have all identical values, they are *still* not equal
     def __eq__(self, other):
         return self is other
 
-    def __iter__(self):
-        return iter(self.variables)
-
-    def __contains__(self, item):
-        return item in self.variables
-
-    def __str__(self):
-        return '[' + 'x'.join([str(shape) for shape in self.shape]) + ']'
-
     def __hash__(self):
         return id(self)
+
+    def __str__(self):
+        return f'[{"x".join([str(shape) for shape in self.value.shape])}]'
+
+    def __iadd__(self, other):
+        self.value += other
+
+    def __isub__(self, other):
+        self.value -= other
+
+    def __imul__(self, other):
+        self.value *= other
+
+    def __imatmul__(self, other):
+        self.value @= other
+
+    def __idiv__(self, other):
+        self.value /= other
+
+    def __ifloordiv__(self, other):
+        self.value //= other
+
+    def __itruediv__(self, other):
+        self.value /= other
+
+    def __ipow__(self, other):
+        self.value **= other
+
+    def __imod__(self, other):
+        self.value %= other
 
 
 # ~~~~~~~~~~~~~~~~~~~~~
@@ -375,3 +350,18 @@ class Matmul(Node):
 
     def __str__(self):
         return ' @ '.join([str(child) for child in self.children])
+
+
+class Transpose(Node):
+    @property
+    def output_nodes(self):
+        raise NotImplementedError
+
+    def propagate(self, features):
+        return np.swapaxes(features, -1, -2)
+
+    def backpropagate(self, features, variable, gradient):
+        return np.swapaxes(gradient, -1, -2)
+
+    def __str__(self):
+        return f'({str(self.children[0])}).T'
