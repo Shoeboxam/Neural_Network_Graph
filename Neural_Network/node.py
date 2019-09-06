@@ -203,7 +203,7 @@ class Variable(Node):
 
 class Add(Node):
     def propagate(self, features):
-        return np.sum(features, axis=0)
+        return features[0] + features[1]
 
     def backpropagate(self, features, variable, gradient):
         if variable in self.children:
