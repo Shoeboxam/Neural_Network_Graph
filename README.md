@@ -3,6 +3,10 @@
 Library to build, differentiate, and optimize computational graphs. 
 Supports differentially private optimization via mixins.
 
+Install dependencies with:  
+`pip install -r requirements.txt`  
+
+
 | Folder         | Name                                                    |  
 | -----------    | -------------------------------------------------       |  
 | Environments   | Classes for wrapping data                               |  

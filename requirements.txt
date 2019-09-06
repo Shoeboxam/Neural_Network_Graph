@@ -1,0 +1,8 @@
+numpy>=1.16.4
+matplotlib>=3.0.3
+pyfiglet>=0.8.post1
+pandas>=0.24.2
+jax>=0.1.43
+jaxlib>=0.1.27
+scikit-learn>=0.20.3
+pytest>=4.4.2
